@@ -28,8 +28,12 @@ from myutil import User,Calculate,ErrorMsg,Search_condition,InsurerData,\
         error_Msg_Sheet
 
 
+#　↓　herokuにデプロイすると、画像が読み込めない。
+# これを解消するためにflaskがheroku内でインスタンス化される時に、
+# 静的なファイルのディレクトリを記述して明確化する。
+# 参考⇒https://qiita.com/go_new_innov/items/222a3ed92f5ed093f462
+app = Flask(__name__,static_folder='./static')
 
-app = Flask(__name__)
 app.secret_key = b'random string...'
 
 #　↓　herokuのpostgreSQL接続用URI 
@@ -613,6 +617,6 @@ if __name__=='__main__':
     app.debug = True
 
     # ↓　サーバーにデプロイして公開するためのもの
-    app.run(host='0.0.0.0')
+    #app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    #app.run(host='localhost')
+    app.run(host='localhost')
