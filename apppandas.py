@@ -11,6 +11,7 @@ from datetime import datetime
 
 import os
 import pathlib
+import pytz
 
 from sqlalchemy import create_engine, Column, Integer, String, \
     Text, DateTime, ForeignKey
@@ -565,8 +566,14 @@ def upload():
         parsonal_data['alert_data'] = error_Msg_Sheet(ErrD_obj,wb)
         #app.logger.info('parsonal_data[alert_data] ={}'.format(parsonal_data['alert_data'] ))  
         #app.logger.info('dicDesti_insur={}'.format(dicDesti_insur))
+
+        # ↓　.xlsxファイルが作成された年月日と時刻を、日本時間で取得（サーバーのおかれている国によって、時刻が変動しないように）
+        # 参考⇒https://qiita.com/keisuke0508/items/df2594770d63bf124ccd
+        now = datetime.now(pytz.timezone('Asia/Tokyo'))
         # ↓　作成された.xlsxファイルに、作成年月日でファイル名を命名する
-        dLFileName='総括票 令和'+year_f+'年'+month_f+'月分　'+str(date.month).zfill(2)+'月' +str(date.day).zfill(2) +'日'+ str(date.hour).zfill(2)+'時' + str(date.minute).zfill(2) +'分'+str(date.second).zfill(2) +'秒 作成'+ '.xlsx'
+        # ↓　時刻の2桁表示（ゼロ埋め）は.zfill()で行う
+        # 参考⇒https://note.nkmk.me/python-zero-padding/
+        dLFileName='総括票 令和'+year_f+'年'+month_f+'月分　'+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
         wb.save(dLFileName)
         wb.close() 
         parsonal_data['dLFile']=dLFileName
