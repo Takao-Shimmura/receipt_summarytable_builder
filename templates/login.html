@@ -1,0 +1,80 @@
+{% extends "layout.html"%}
+{% block title%}
+Login
+{% endblock%}
+
+{% block headline%}
+{{title}}
+{% endblock%}
+
+{% block content%}
+{% if err %}
+<p class="alert alert-warning">
+{%else%}
+<p class="alert alert-light ">
+{%endif%}
+{{message}}</p>
+
+<div class="card" >
+    <div class="card-header">
+        <h5 class="card-title">ログイン　フォーム</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/login">
+        <div class="form-group">
+            <label for="id">ID:</label>
+            <input type="text" class="form-control"
+                id="id" name="id" value="{{id}}">
+                <small class="form-text text-muted">
+                    ※IDを入力（未登録の場合は新たに登録したいIDを記入）
+                </small>
+        </div>
+        <div class="form-group">
+            <label for="pass">PassWord:</label>
+            <input type="password" class="form-control"
+                id="pass" name="pass" >
+                <small class="form-text text-muted">
+                    ※パスワードを入力（未登録の場合は新たに登録したいパスワードを記入）
+                </small>
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Login">
+        </div>
+
+        </form>
+    </div>
+</div>
+<!--     </div>
+    <img class="card-img" src="/static/TreasureBoxOpen.gif">
+    <div class="card-body">
+        <p class="card-text">
+            宝箱アニメのサンプル表示
+        </p>
+    </div>
+</div> -->
+
+
+
+<!-- <p>{{message}}</p>
+<form method="post" action="/login">
+<table>
+    <tr>
+        <th>id</th>
+        <td>
+            <input type="text" name="id" value="{{id}}">
+        </td>
+        <th>password</th>
+        <td>
+            <input type="password" name="pass" >
+        </td>
+    </tr>
+    <th></th>
+    <td><input type="submit" value="ログイン" ></td>
+    </div>
+</form>
+</table> -->
+{% endblock%}
+
+{% block footer%}
+copyright=shim
+{% endblock%}

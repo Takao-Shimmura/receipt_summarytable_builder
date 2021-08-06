@@ -1,0 +1,322 @@
+{% extends "layout.html"%}
+{% block title%}
+Message
+{% endblock%}
+
+{% block headline%}
+{{title}}
+{% endblock%}
+
+{% block content %}
+
+
+<!-- Vue.js container -->
+
+<div id="app" class="m-3">
+
+    <message_board/>
+</div>
+
+
+<!-- message_board's template -->
+{%raw%}
+<!-- <script type="vue/x=template" id="message_board-template"> -->
+<script type="text/x=template" id="message_board-template">
+<div>
+    <div class="text-right h6">
+        <a href="javascript:void(0)"
+        v-on:click="in_out_check">{{in_out}}</a>
+    </div>
+    <div class="alert alert-success p-1">
+        <h5>{{alert_msg}}</h5>
+    </div>
+
+<!-- Tab Panel -->
+    <ul class="nav nav-tabs" role="tablist">
+        <!-- 1つ目のタブ -->
+        <li class="nav-item">
+            <a class="nav-link active" href="#msgs" id="msg_tab_link"
+                data-toggle="tab" role="tab">Messages</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#frms" id="frm_tab_link"
+                data-toggle="tab" role="tab">Form</a>
+        </li>
+
+    </ul>
+
+<!-- Tab Contents -->
+<div class="tab-content">
+    <!-- 1st Tab  -->
+    <div class="tab-pane fade show active" id="msgs" role="tabpanel">
+        <div v-if="login_flg">
+            <h5 class="p-3 h5 text-center">
+                *Posted Message*
+            </h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Name</th>
+                        <th>Created</th></tr>
+                </thead>
+                <tbody>
+                <tr v-for="(item,key) in msg_data" class = "clickable-row"
+                    v-bind:data-id="item.id">
+                    <td>{{item.user}}</td>
+                    <td>{{item.created}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- 2nd Tab  -->
+    <div class="tab-pane  fade" id="frms" role="tabpanel">
+        <div v-if="login_flg">
+            <h5 class="mt-4">
+                Post your message
+            </h5>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="comment">Message</label>
+                        <div class="row">
+                        <input type="text"  class="form-control col" 
+                            id="comment" name="comment" v-model="post_msg">
+                        <button v-on:click="postMsg"
+                            class="btn btn-primary col-3 col-sm-3 col-md-2 col-lg-2 col-xl-2">
+                            Post Now!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--QRcode Dialog-->
+<div class = "modal fade" id ="QRDLOG">
+    <div class ="modal-dialog" role = "document">
+        <div class ="modal-content">
+            <div v-if="qr_msg != null" class ="card">
+                <div class = "card-header">
+                    <h4 class ="card-title">
+                        {{qr_msg.user}}さんのメッセージ:
+                    </h4>
+                </div>
+                <div class ="card-body text-center">
+                    <img width ="300px" v-bind:src="qr_msg.qr" alt="QR code">
+                </div>
+                <div class ="card-footer">
+                    <h6 class="text-right">{{qr_msg.created}}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login Dialog -->
+<div class="modal fade" id="login">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        {{login_msg}}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="id">id</label>
+                        <input type="text"  class="form-control " id="id" name="id" v-model="form_id">
+                        <small class="form-text text-muted">
+                            ※IDを入力（未入力の場合は、新たに登録したいIDを記入）
+                        </small>
+
+                    </div>
+                    <div class="form-group">
+                        <label for="pass">password</label>
+                        <input type="password"  class="form-control" id="pass" name="pass" v-model="form_pass">
+                        <small class="form-text text-muted">
+                            ※パスワードを入力（未登録の場合は、新たに登録するパスワードを記入）
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn=primary" v-on:click="login">login</button>
+                    </div>
+                </div>
+            </div>
+        </div>   
+    </div>
+</div>
+</div>
+
+</script>
+{%endraw%}
+
+<!-- ******************** -->
+<!-- * Vue.js Component Script * -->
+<!-- ******************** -->
+<script>
+//message_board object
+Vue.component('message_board',{
+    template:'#message_board-template',
+    data:function(){
+
+        return{
+                in_out:'login',       
+                login_flg:false,
+                login_id:-1,
+                login_user:'',
+                form_id:'',
+                form_pass:'',
+                login_msg:'Login form:',
+                alert_msg:'※ログインしてください',
+                post_msg:'',
+                msg_data:[],
+                qr_msg:null,
+        }
+    },
+    methods:{
+        // check login/logout.
+        in_out_check:function(e){
+            if(this.login_flg){
+                this.logout();
+            }else{
+                this.show_login();
+            }   
+        },
+        //show login dialog
+        show_login:function(){
+            this.form_id='';
+            this.form_pass='';
+            this.login_msg='Login form:';
+            $('#login').modal('show');
+        },
+        //access server and logined
+        login:function(e){
+            let formData= new FormData();
+            formData.append("name",this.form_id);
+            formData.append("password",this.form_pass);
+            let self=this;
+            $.ajax({
+                type:'POST',
+                url:'/login',
+                data:formData,
+                processData:false,
+                contentType:false,
+            success:function(data){
+                if (data !='False'){
+                    self.getMsg();
+                    self.in_out='logout';
+                    self.login_flg=true;
+                    self.login_id=data * 1;
+                    self.login_user=self.form_id;
+                    self.alert_msg='※'+self.login_user+'でログインしました！';
+                    self.form_id='';
+                    self.form_pass='';
+                    $('#login').modal('hide');
+                    self.getMsg();
+                }else{
+                    self.login_msg='パスワードが違います';
+                    self.pass='';
+                }
+            },
+            error:function(request,status,err){
+                self.login_msg='※問題が発生しました';
+                
+            }
+        });
+    },
+    //logout
+    logout:function(){
+
+        this.in_out='login';
+        this.msg_data=[];
+        this.login_flg=false;
+        this.login_id=-1;
+        this.login_user='';
+        this.alert_msg='※ログアウトしました';
+
+    },
+    //post message.
+    postMsg:function(){
+        let formData=new FormData();
+        formData.append("id",this.login_id);
+        formData.append("message",this.post_msg);
+        let self=this;
+        $.ajax({
+            type:'POST',
+            url:'/post',
+            data:formData,
+            processData:false,
+            contentType:false,
+
+            success:function(data){
+              if (data == 'True') {
+                        self.alert_msg = '※メッセージを送信しました。'
+                        self.getMsg();
+                    }
+            },
+            
+            error:function(request,status,err){
+                self.alert_msg='※メッセージ送信に問題が発生しました';
+
+            }
+        });
+        
+    }, 
+  // get all messages.
+        getMsg: function() {
+            let self = this;
+            $.ajax({
+                type: 'POST',
+                url: '/messages',
+                
+                processData: false,
+                contentType: false,
+
+
+                success: function (data) {
+                    $(".clickable-row").unbind('click');
+                    self.msg_data = data;
+                    self.post_msg = '';
+                    $(".clickable-row").click(function(e){
+                        let clicked_id = e.delegateTarget.dataset['id'];
+                        let formData=new FormData();
+                        formData.append("id",clicked_id);
+                        $.ajax({
+                                type:'POST',
+                                url:'/qr',
+                                data:formData,
+                                processData:false,
+                                contentType:false,
+                            success:function(data){
+                                self.qr_msg = data;
+                                $('#QRDLOG').modal('show');
+                            },
+                            error:function(request,status,err){
+                                self.alert_msg='※メッセージ送信に問題が発生しました';
+
+                            }
+                        });
+
+                    });
+                    $('#msg_tab_link').tab('show');
+                },
+                error: function(request, status, err) {
+                    self.alert_msg = '※メッセージ送信に問題が発生しました。';
+                }
+            });
+        }, 
+    },    
+});
+//start Vue.
+new Vue({
+    el:'#app',
+});
+</script>
+
+
+{% endblock%}
+
+{% block footer%}
+copyright=shim
+{% endblock%}

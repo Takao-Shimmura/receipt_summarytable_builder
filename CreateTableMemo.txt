@@ -1,0 +1,200 @@
+以下はSQLコマンド
+ DB browser for SQLite の「SQL実行」タブ内に書き込むと、一気にテーブルを生成してくれる
+CREATE TABLE "search" (
+    "id" INTEGER NOT NULL,
+    "condition_Title" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "acupOrMass_Condition" VARCHAR(255),
+    "acupOrMass_Cell" VARCHAR(255),
+    "insurerNoLast_Cell" VARCHAR(255),
+    "insuraCodeNo_Cell" VARCHAR(255),
+    "insurerNo_CellStep"INTEGER NOT NULL,
+    "name_Cell" VARCHAR(255),
+    "nameKana_Cell" VARCHAR(255),
+    "amount_Cell" VARCHAR(255),
+    "copayment_Cell" VARCHAR(255),
+    "billingAmount_Cell" VARCHAR(255),
+    "relationship_Cell" VARCHAR(255),
+    "therapistName_Cell" VARCHAR(255),
+    "treatmentHosName_Cell" VARCHAR(255),
+    "registerNo_Cell" VARCHAR(255),
+    "yearTop_Cell" VARCHAR(255),
+    "year1st_Cell" VARCHAR(255),
+    "yearLast_Cell" VARCHAR(255),
+    "monthTop_Cell" VARCHAR(255),
+    "month1st_Cell" VARCHAR(255),
+    "monthLast_Cell" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+
+CREATE TABLE "calculate" (
+    "id" INTEGER NOT NULL,
+    "name" VARCHAR(255),
+    "nameKana" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "insurerNo_Str" VARCHAR(255),
+    "insuraCodeNo_Str" VARCHAR(255),
+    "amount_Int"  INTEGER,
+    "copayment_Int" INTEGER,
+    "billingAmount_Int"  INTEGER,
+    "relationship" VARCHAR(255),
+    "sheetName" VARCHAR(255),
+    "therapistName" VARCHAR(255),
+    "treatmentHosName" VARCHAR(255),
+    "registerNo_Str" VARCHAR(255),
+    "year_Str" VARCHAR(255),
+    "month_Str" VARCHAR(255),
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+
+    PRIMARY KEY("id")
+);
+
+CREATE TABLE "error_msg" (
+    "id" INTEGER NOT NULL,
+    "name" VARCHAR(255),
+    "nameKana" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "insurerNo_Str" VARCHAR(255),
+    "insuraCodeNo_Str" VARCHAR(255),
+    "amount_Int"  INTEGER,
+    "copayment_Int" INTEGER,
+    "billingAmount_Int"  INTEGER,
+    "relationship" VARCHAR(255),
+    "sheetName" VARCHAR(255),
+    "therapistName" VARCHAR(255),
+    "treatmentHosName" VARCHAR(255),
+    "registerNo_Str" VARCHAR(255),
+    "year_Str" VARCHAR(255),
+    "month_Str" VARCHAR(255),
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+CREATE TABLE "insurerdata" (
+    "id" INTEGER NOT NULL,
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "insurer_No_Str" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+
+【2021年　7月分より　新潟保団連の押印廃止に伴い、
+委任欄の申請者氏名　を削除　のため以下のフィールドを削除】
+CREATE TABLE "search" (
+    "insuredName_Cell" VARCHAR(255),
+
+CREATE TABLE "calculate" (
+    "insuredName" VARCHAR(255),
+
+CREATE TABLE "error_msg" (
+    "insuredName" VARCHAR(255),
+
+【2021年　8月2日　デプロイ】
+以下はSQLコマンド。文頭のSQLiteではなくPostgreSQL用に書き換える
+https://www.i-ryo.com/entry/2020/10/25/173932
+を参考に、INTEGERをSERIALに書き換える
+CREATE TABLE "search" (
+    "id" SERIAL NOT NULL,
+    "condition_Title" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "acupOrMass_Condition" VARCHAR(255),
+    "acupOrMass_Cell" VARCHAR(255),
+    "insurerNoLast_Cell" VARCHAR(255),
+    "insuraCodeNo_Cell" VARCHAR(255),
+    "insurerNo_CellStep"SERIAL NOT NULL,
+    "name_Cell" VARCHAR(255),
+    "nameKana_Cell" VARCHAR(255),
+    "amount_Cell" VARCHAR(255),
+    "copayment_Cell" VARCHAR(255),
+    "billingAmount_Cell" VARCHAR(255),
+    "relationship_Cell" VARCHAR(255),
+    "therapistName_Cell" VARCHAR(255),
+    "treatmentHosName_Cell" VARCHAR(255),
+    "registerNo_Cell" VARCHAR(255),
+    "yearTop_Cell" VARCHAR(255),
+    "year1st_Cell" VARCHAR(255),
+    "yearLast_Cell" VARCHAR(255),
+    "monthTop_Cell" VARCHAR(255),
+    "month1st_Cell" VARCHAR(255),
+    "monthLast_Cell" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+CREATE TABLE "calculate" (
+    "id" SERIAL NOT NULL,
+    "name" VARCHAR(255),
+    "nameKana" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "insurerNo_Str" VARCHAR(255),
+    "insuraCodeNo_Str" VARCHAR(255),
+    "amount_Int"  SERIAL,
+    "copayment_Int" SERIAL,
+    "billingAmount_Int"  SERIAL,
+    "relationship" VARCHAR(255),
+    "sheetName" VARCHAR(255),
+    "therapistName" VARCHAR(255),
+    "treatmentHosName" VARCHAR(255),
+    "registerNo_Str" VARCHAR(255),
+    "year_Str" VARCHAR(255),
+    "month_Str" VARCHAR(255),
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+
+    PRIMARY KEY("id")
+);
+CREATE TABLE "error_msg" (
+    "id" SERIAL NOT NULL,
+    "name" VARCHAR(255),
+    "nameKana" VARCHAR(255),
+    "title_AcupOrMass" VARCHAR(255),
+    "insurerNo_Str" VARCHAR(255),
+    "insuraCodeNo_Str" VARCHAR(255),
+    "amount_Int"  SERIAL,
+    "copayment_Int" SERIAL,
+    "billingAmount_Int"  SERIAL,
+    "relationship" VARCHAR(255),
+    "sheetName" VARCHAR(255),
+    "therapistName" VARCHAR(255),
+    "treatmentHosName" VARCHAR(255),
+    "registerNo_Str" VARCHAR(255),
+    "year_Str" VARCHAR(255),
+    "month_Str" VARCHAR(255),
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+CREATE TABLE "insurerdata" (
+    "id" SERIAL NOT NULL,
+    "kanji_Insurer_Name" VARCHAR(255),
+    "kana_Insurer_Name" VARCHAR(255),
+    "insurer_No_Str" VARCHAR(255),
+    "soukatsu1Desti" VARCHAR(255),
+    PRIMARY KEY("id")
+);
+
+
+ コマンドプロンプト内でheroku login して、heroku pg:psql --app receipt-summarytable-builder
+ でデータベースにアクセスし、以下のコマンドを入力
+
+
+\copy insurerdata from 'C:\Py\FlaskSampleP68\flask_Ahaki_Receipt_SummaryTable_builder_app/insurerdata.csv' with csv encoding 'utf8' Header
+\copy search from 'C:\Py\FlaskSampleP68\flask_Ahaki_Receipt_SummaryTable_builder_app/search.csv' with csv encoding 'utf8' Header
+
+テーブルのオブジェクトごと削除コマンド
+DROP TABLE "insurerdata";
+DROP TABLE "search";
+DROP TABLE "error_msg";
+DROP TABLE "calculate";
+
+テーブルのデータすべて削除コマンド
+DELETE FROM "insurerdata";
+DELETE FROM "search";
+DELETE FROM "error_msg";
+DELETEP FROM "calculate";
+ダミーコマンド
+
