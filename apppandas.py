@@ -68,8 +68,8 @@ def index():
     ses.commit()#復帰
     ses.close()# 復帰
     return render_template('index.html',\
-            title = '新潟県鍼灸マッサージ師会　会員専用',\
-            message = '保険申請書　総括表作成HP')
+            title = '新潟県鍼灸マッサージ師会　公認',\
+            message = '保険申請書　総括票作成　ホームページ')
 #post message
 @app.route('/post',methods=['POST'])
 def post_msg():
