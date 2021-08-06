@@ -617,6 +617,6 @@ if __name__=='__main__':
     app.debug = True
 
     # ↓　サーバーにデプロイして公開するためのもの
-    #app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    app.run(host='localhost')
+    #app.run(host='localhost')
