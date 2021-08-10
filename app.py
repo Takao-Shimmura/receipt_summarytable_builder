@@ -1,6 +1,6 @@
 #!python3.9.1
 from flask import Flask, render_template, request, session, \
-    redirect, jsonify, current_app, g,send_file,make_response,
+    redirect, jsonify, current_app, g,send_file,make_response
 
 
 
@@ -45,12 +45,23 @@ def get_filename():
     list4.append([1,'「療養を受けた者の氏名」の記入漏れ'])
     list4.append([2,'「療養を受けた者の氏名」(フリガナ))の記入漏れ'])
     list4.append([3,'「保険者番号」の記入漏れ'])
-    list4.append([12,'施術管理者の「登録記号番号」の記入漏れもしくは記入ミス'])
-    list4.append([13,'申請書冒頭の申請「年」か、施術期間の「年」のいずれかの記入漏れもしくは記入ミス'])
-    list4.append([14,'申請書冒頭の申請「月」か、施術期間の「月」のいずれかの記入漏れもしくは記入ミス'])
-    list4.append([15,'「保険者番号」から保険者が特定できません　保険者番号の記入ミスもしくは、ホームページ管理者による「保険者番号の登録漏れ」です'])
+    list4.append([11,'施術管理者の「登録記号番号」の記入漏れもしくは記入ミス'])
+    list4.append([12,'申請書冒頭の申請「年」か、施術期間の「年」のいずれかの記入漏れもしくは記入ミス'])
+    list4.append([13,'申請書冒頭の申請「月」か、施術期間の「月」のいずれかの記入漏れもしくは記入ミス'])
+    list4.append([14,'「保険者番号」から保険者が特定できません　保険者番号の記入ミスもしくは、ホームページ管理者による「保険者番号の登録漏れ」です'])
     alt_data.append(list4)
-    return jsonify(alt_data)
+    f={'alt_data':alt_data,'alt_data2':alt_data}
+    return jsonify(f)
+
+@app.route('/reget',methods=['POST'])
+def get_json():
+    alt_data=[]
+    """ alt_data=json.loads(request.form.get('alt_data_relay')) """
+    a=request.form.get('alt_data_relay')
+    alt_data=json.loads(a) 
+    app.logger.info('alt_data={}'.format(alt_data))
+    f={'alt_data2':alt_data}
+    return jsonify(f)
 
 @app.route('/get',methods=['GET'])
 def get_msg():

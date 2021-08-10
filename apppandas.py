@@ -75,19 +75,7 @@ def index():
     return render_template('index.html',\
             title = '新潟県鍼灸マッサージ師会　公認',\
             message = '保険申請書　総括票作成　ホームページ')
-#post message
-@app.route('/post',methods=['POST'])
-def post_msg():
-    id = request.form.get('id')
-    msg = request.form.get('message')
-    created = datetime.now()
-    Session = sessionmaker(bind=engine)
-    ses = Session()
-    msg_obj = Calculate(users_id = id,message = msg, created = created)
-    ses.add(msg_obj)
-    ses.commit()
-    ses.close()
-    return 'True'
+
 
 #get calculate
 @app.route('/calculate',methods=['POST'])
@@ -145,6 +133,7 @@ def upload():
                 if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
                     """ df=None """
                     df = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
+                    
                     for dfsh in df: ###各シートから読み込んだdataframeのインデックスとヘッダーを番号振りなおし
                         ###Dataframe
                         dfdic=df[dfsh]
@@ -194,81 +183,90 @@ def upload():
                         d_dic['title_AcupOrMass'] =cD['title_AcupOrMass']# はきorマ　を入れておく
                         # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
                         # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
-                        if df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]]  == \
-                            df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
-                            get_cellno_2list(cD['year1st_Cell'])[1]]  and\
-                            df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]]  == \
-                            df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
-                            get_cellno_2list(cD['yearLast_Cell'])[1]]  and\
-                            df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]]  != 0:
+                        if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                            get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
+                            int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                            get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
+                            int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                            get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
+                            int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                            get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
+                            int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                            get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
                         # ↓「年」がyear month dialogで確認した数字とあっていなければ'False'を入力        
                             if flg1 !='False':
                                 #app.logger.info('year_f={}'.format(year_f))
                                 #app.logger.info('year={}'.format(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
                                 #get_cellno_2list(cD['yearTop_Cell'])[1]] ))
                                 if int(year_f) ==\
-                                df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]] :
+                                int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]])) :
                                     d_dic['year_Str'] =\
-                                    str(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                    get_cellno_2list(cD['yearTop_Cell'])[1]] )
+                                    str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]] )))
                                 else:
                                     d_dic['year_Str'] ='False'
                             else:
+                                """ s=df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]]
+                                app.logger.info('s.type={}'.format(type(s))) """
                                 d_dic['year_Str'] =\
-                                str(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]] )
+                                str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]] )))
                         else:
                             d_dic['year_Str'] ='False'
                         
                         # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
                         # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
-                        if df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]]  == \
-                            df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
-                            get_cellno_2list(cD['month1st_Cell'])[1]]  and\
-                            df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]]  == \
-                            df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
-                            get_cellno_2list(cD['monthLast_Cell'])[1]]  and\
-                            df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]]  != 0:
+                        if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                            get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
+                            int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                            get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
+                            int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                            get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
+                            int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                            get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
+                            int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                            get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
                         # ↓「月」がyear month dialogで確認した数字とあっていなければ'False'を入力    
                             if flg1 !='False':
                                 if int(month_f) ==\
-                                df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                get_cellno_2list(cD['monthTop_Cell'])[1]] :
+                                int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                get_cellno_2list(cD['monthTop_Cell'])[1]] )):
                                     d_dic['month_Str'] =\
-                                    str(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )
+                                    str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )))
                                 else:
                                     d_dic['month_Str'] ='False'
+                            #str(int(float・・・とややこしい処理をしているのは、1⃣pandasで
+                            #読み込む際に、数値を勝手に「浮動小数点：float」で読み込んで
+                            # dataframe化されるがある（例「2」のはずが「2.0」と読み込む）
+                            # そのために、2⃣そのデータがstrによって文字列化されてしまうと、
+                            # (例「'2.0'」)3⃣それをさらに、intで整数化しようとするとエラーが出る
+                            #参考⇒https://qiita.com/ringCurrent/items/1df058bb203374a4b294
+                            #これらを回避するために、float関数を用いる
+
+
                             else:
                                 d_dic['month_Str'] =\
-                                str(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                get_cellno_2list(cD['monthTop_Cell'])[1]] )
+                                str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                get_cellno_2list(cD['monthTop_Cell'])[1]] )))
                         else:
                             d_dic['month_Str'] ='False'
 
                         for sC,cA in sC2cAdic.items():
                         # 例）名前　欄が空白でなければ{'name_Cell':名前}／空白ならば{'name_Cell':'False'}
-                            if cA=='name':
-                                """ app.logger.info('name={}'.format(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                get_cellno_2list(cD[sC])[1]] )) """
+                            
                             # pandasで取得したdataFrameのなかで、欠損値である'nan'は扱いが難しく、
                             # if文で判定するためには、 if cA=='nan' や　if cA==str('nan')では
                             # 判定してくれない（しかも構文エラーにならないので、ややこしい）
                             #　判定するためにはif pd.isnull(?):とする
                             # （欠損値nanならば’true’／pdは　import pandas as pd　より）
                             # 参照⇒https://kagglenote.com/misc/pandas_nan_judge/
-                            if not pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                get_cellno_2list(cD[sC])[1]]) :
-                                if cA=='name':
-                                    """ app.logger.info('name2={}'.format(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                    get_cellno_2list(cD[sC])[1]] )) """
+                            cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                get_cellno_2list(cD[sC])[1]]
+                            if not pd.isnull(cellV1) :
+
                                 
                                 # ↓　もしも、更新先のテーブルの「属性」に'insurerNo_Str'(保険者番号)という文字列
                                 # が含まれていたら、'insurerNoLast_Cell'と'insurerNo_CellStep'を駆使して
@@ -285,38 +283,57 @@ def upload():
                                             jj = ''
                                         #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
                                         # の場合もOK
-                                        ### ↓　念のため、保険者番号の1マスに、整数だけでなく、
-                                        # 少数を含んだ数字がはいっているかもしれないので、小数点以下をカットする
+                                        # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
+                                        # str(int(float(によって、無理やり整数化と文字列化をする。
                                         else:
-                                            jj = str(round(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                            get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']] ))
-                                        
+                                            try:
+                                                jj = str(int(float(df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                                get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']] )))
+                                            #　↓　str(int(floatでエラーが出る場合は、「数値に変換できない文字列」が入っている場合
+                                            # そういう場合は、numberに'False'を入れて、breakでfor文を
+                                            # とっとと抜け出す
+                                            except:
+                                                number= 'False'
+                                                break
                                         number = jj + number
                                     d_dic[cA] = number
                                 # ↓　もしも、更新先のテーブルの「属性」が'therapistName'(施術者名)だったら
                                 # なおかつyear month dialogで確認した施術者名と違っていたら'False'が入る
                                 elif 'therapistName' in cA and flg1 !='False' and\
-                                    therapistName_f != df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                        get_cellno_2list(cD[sC])[1]] :
+                                    therapistName_f != cellV1 :
                                         d_dic[cA] = 'False'
                                     
                                 # ↓　もしも、更新先のテーブルの「属性」が'treatmentHosName'(施術所名)だったら
                                 # なおかつyear month dialogで確認した施術所名と違っていたら'False'が入る
                                 elif 'treatmentHosName' in cA and flg1 !='False' and\
-                                    treatmentHosName_f != df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                        get_cellno_2list(cD[sC])[1]] :
+                                    treatmentHosName_f != cellV1 :
                                         d_dic[cA] = 'False'
                                 # ↓　もしも、更新先のテーブルの「属性」が'registerNo_Str'(登録記号番号)だったら
                                 # なおかつyear month dialogで確認した登録記号番号と違っていたら'False'が入る
                                 elif 'registerNo_Str' in cA and flg1 !='False' and\
-                                    registerNo_Str_f != df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                        get_cellno_2list(cD[sC])[1]] :
+                                    registerNo_Str_f != cellV1 :
                                         d_dic[cA] = 'False'
+                                
+                                # ↓　もしも、更新先のテーブルの「属性」が'amount_Str'(合計額)もしくは
+                                # 'copayment_Str'(一部負担金額)もしくは'billingAmount_Str'(請求額)であり、
+                                # なおかつyear_month Dialogを開き終わった後だったら・・・
+                                # cellV1の値を文字列化したものをd_dic[cA] に入れてみようとする（try文）
+                                # エラーが出る（cellV1が文字、もしくはnanだったら）exceptに飛んで、'False'が入る。
+                                # うまくいったとしても、cellV1が文字列'0'だったら'False'が入る。
+                                # for文から抜け出す　参考⇒https://note.nkmk.me/python-break-nested-loops/
+                                # カッコと論理演算子　参考⇒https://dot-blog.jp/news/python-boolean-operations-bool/
+                                elif ('amount_Str' in cA or 'copayment_Str' in cA \
+                                    or 'billingAmount_Str' in cA) and flg1 !='False':
+                                    try:
+                                        d_dic[cA] = str(int(float(cellV1)))
+                                        if str(int(float(cellV1)))=='0':
+                                            d_dic[cA] = 'False'  
+                                    except:
+                                        d_dic[cA] = 'False'   
 
                                 # 上記以外ならば、素直にセルの値が入る。
                                 else:
-                                    d_dic[cA] = df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                        get_cellno_2list(cD[sC])[1]] 
+                                    d_dic[cA] = cellV1
                             else:
                                 d_dic[cA] = 'False'
                             """ if cA=='name':
@@ -437,13 +454,13 @@ def upload():
                                     target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
                                     kensuu_insert(target_sheet_cell1)
                                     target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
-                                    loadDInt = loadD['amount_Int']#本人の費用額
+                                    loadDInt = int(float(loadD['amount_Str']))#本人の費用額
                                     kingaku_insert(loadDInt,target_sheet_cell2)
                                 else:
                                     target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
                                     kensuu_insert(target_sheet_cell1)
                                     target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
-                                    loadDInt = loadD['amount_Int']#家族の費用額
+                                    loadDInt = int(float(loadD['amount_Str']))#家族の費用額
                                     kingaku_insert(loadDInt,target_sheet_cell2)
         template_sheet = wb['総括票（Ⅱ）(ひな形　禁削除)']            
         for insurL in sortInsList:
@@ -463,25 +480,25 @@ def upload():
                         target_sheet_cell1=target_sheet.cell(35, 13)#本人の件数を入れるセル
                         kensuu_insert(target_sheet_cell1)
                         target_sheet_cell2=target_sheet.cell(35, 24)#本人の費用額を入れるセル
-                        loadDInt = loadD['amount_Int']#本人の費用額
+                        loadDInt = int(float(loadD['amount_Str']))#本人の費用額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(35, 39)#本人の一部負担金額を入れるセル
-                        loadDInt = loadD['copayment_Int']#本人の一部負担金額
+                        loadDInt = int(float(loadD['copayment_Str']))#本人の一部負担金額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(35, 54)#本人の請求額を入れるセル
-                        loadDInt = loadD['billingAmount_Int']#本人の請求額
+                        loadDInt = int(float(loadD['billingAmount_Str']))#本人の請求額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                     else:
                         target_sheet_cell1=target_sheet.cell(41, 13)#家族の件数を入れるセル
                         kensuu_insert(target_sheet_cell1)
                         target_sheet_cell2=target_sheet.cell(41, 24)#家族の費用額を入れるセル
-                        loadDInt = loadD['amount_Int']#家族の費用額
+                        loadDInt = int(float(loadD['amount_Str']))#家族の費用額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(41, 39)#家族の一部負担金額を入れるセル
-                        loadDInt = loadD['copayment_Int']#家族の一部負担金額
+                        loadDInt = int(float(loadD['copayment_Str']))#家族の一部負担金額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(41, 54)#家族の請求額を入れるセル
-                        loadDInt = loadD['billingAmount_Int']#家族の請求額
+                        loadDInt = int(float(loadD['billingAmount_Str']))#家族の請求額
                         kingaku_insert(loadDInt,target_sheet_cell2)
         
         template_sheet = wb['総括表　新潟県師会用（禁削除）']            
@@ -498,39 +515,39 @@ def upload():
                     target_sheet_cell1=target_sheet.cell(7, 2)#協会けんぽのはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(7, 4)#協会けんぽのはりきゅうの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(7, 6)#協会けんぽのマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(7, 7)#協会けんぽのマッサージの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif '共済' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(9, 2)#共済のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(9, 4)#共済のはりきゅうの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(9, 6)#共済のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(9, 7)#共済のマッサージの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif '国民健康保険組合' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(10, 2)#国保組合のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(10, 4)#国保組合のはりきゅうの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(10, 6)#国保組合のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(10, 7)#国保組合のマッサージの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             #保険者番号が6桁もしくは、山形県のように5桁の場合、
             # あるいは67から始まる退職者医療の場合⇒国保へ分類される
@@ -541,26 +558,26 @@ def upload():
                     target_sheet_cell1=target_sheet.cell(12, 2)#国保のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(12, 4)#国保のはりきゅうの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(12, 6)#国保のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(12, 7)#国保のマッサージの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif loadD['insurerNo_Str'][0:2] == '39':
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(13, 2)#後期高齢のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(13, 4)#後期高齢のはりきゅうの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(13, 6)#後期高齢のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(13, 7)#後期高齢のマッサージの費用額を入れるセル
-                    loadDInt = loadD['amount_Int']#費用額
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
         wb.remove(wb['総括表　新潟県師会用（禁削除）'])
         wb.remove(wb['総括票（Ⅰ）(ひな形　禁削除)'])

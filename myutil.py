@@ -57,9 +57,9 @@ class Calculate(Base):
     title_AcupOrMass = Column(String(255))
     insurerNo_Str = Column(String(255))
     insuraCodeNo_Str = Column(String(255))
-    amount_Int = Column(Integer)
-    copayment_Int = Column(Integer)
-    billingAmount_Int = Column(Integer)
+    amount_Str = Column(String(255))
+    copayment_Str = Column(String(255))
+    billingAmount_Str = Column(String(255))
     relationship = Column(String(255))
     # <2021 7月分より>insuredName= Column(String(255)) 
     sheetName= Column(String(255))
@@ -80,9 +80,9 @@ class Calculate(Base):
             'title_AcupOrMass':str(self.title_AcupOrMass),
             'insurerNo_Str':str(self.insurerNo_Str),
             'insuraCodeNo_Str':str(self.insuraCodeNo_Str),
-            'amount_Int':int(self.amount_Int),
-            'copayment_Int':int(self.copayment_Int),
-            'billingAmount_Int':int(self.billingAmount_Int),
+            'amount_Str':str(self.amount_Str),
+            'copayment_Str':str(self.copayment_Str),
+            'billingAmount_Str':str(self.billingAmount_Str),
             'relationship':str(self.relationship),
             #<2021 7月分より> 'insuredName':str(self.insuredName), 
             'sheetName':str(self.sheetName),
@@ -117,9 +117,9 @@ class Calculate(Base):
             'title_AcupOrMass',\
             'insurerNo_Str',\
             'insuraCodeNo_Str',\
-            'amount_Int',\
-            'copayment_Int',\
-            'billingAmount_Int',\
+            'amount_Str',\
+            'copayment_Str',\
+            'billingAmount_Str',\
             'relationship',\
             # <2021 7月分より>'insuredName',\ 
             'sheetName',\
@@ -144,9 +144,9 @@ class ErrorMsg(Base):
     title_AcupOrMass = Column(String(255))
     insurerNo_Str = Column(String(255))
     insuraCodeNo_Str = Column(String(255))
-    amount_Int = Column(Integer)
-    copayment_Int = Column(Integer)
-    billingAmount_Int = Column(Integer)
+    amount_Str = Column(String(255))
+    copayment_Str = Column(String(255))
+    billingAmount_Str = Column(String(255))
     relationship = Column(String(255))
     # <2021 7月分より>insuredName= Column(String(255)) 
     sheetName= Column(String(255))
@@ -167,9 +167,9 @@ class ErrorMsg(Base):
             'title_AcupOrMass':str(self.title_AcupOrMass),
             'insurerNo_Str':str(self.insurerNo_Str),
             'insuraCodeNo_Str':str(self.insuraCodeNo_Str),
-            'amount_Int':int(self.amount_Int),
-            'copayment_Int':int(self.copayment_Int),
-            'billingAmount_Int':int(self.billingAmount_Int),
+            'amount_Str':str(self.amount_Str),
+            'copayment_Str':str(self.copayment_Str),
+            'billingAmount_Str':str(self.billingAmount_Str),
             'relationship':str(self.relationship),
             #<2021 7月分より>'insuredName':str(self.insuredName), 
             'sheetName':str(self.sheetName),
@@ -204,9 +204,9 @@ class ErrorMsg(Base):
             'title_AcupOrMass',\
             'insurerNo_Str',\
             'insuraCodeNo_Str',\
-            'amount_Int',\
-            'copayment_Int',\
-            'billingAmount_Int',\
+            'amount_Str',\
+            'copayment_Str',\
+            'billingAmount_Str',\
             'relationship',\
             #<2021 7月分より> 'insuredName',\ 
             'sheetName',\
@@ -335,9 +335,9 @@ def get_dic_schCond2calAttr():
         'insuraCodeNo_Cell':'insuraCodeNo_Str',
         'name_Cell':'name',
         'nameKana_Cell':'nameKana',
-        'amount_Cell':'amount_Int',  
-        'copayment_Cell':'copayment_Int',  
-        'billingAmount_Cell':'billingAmount_Int',  
+        'amount_Cell':'amount_Str',  
+        'copayment_Cell':'copayment_Str',  
+        'billingAmount_Cell':'billingAmount_Str',  
         'relationship_Cell':'relationship',  
         # 'insuredName_Cell':'insuredName', <2021 7月分より>
         'therapistName_Cell':'therapistName',
@@ -562,11 +562,11 @@ def error_Msg_Sheet(err_obj,wb2):
                 list4.append([3,'「保険者番号」の記入漏れ'])
             if l4['insuraCodeNo_Str']=='False'or l4['insuraCodeNo_Str']== '0':
                 list4.append([4,'「被保険者証等の記号番号」の記入漏れ'])
-            if l4['amount_Int']=='False' or l4['amount_Int']== '0':
+            if l4['amount_Str']=='False' :
                 list4.append([5,'「合計」金額の記入漏れ'])
-            if l4['copayment_Int']== 'False' or l4['copayment_Int']== '0':
+            if l4['copayment_Str']== 'False' :
                 list4.append([6,'「一部負担金」金額の記入漏れ'])
-            if l4['billingAmount_Int']== 'False' or l4['billingAmount_Int']== '0':
+            if l4['billingAmount_Str']== 'False' :
                 list4.append([7,'「請求額」金額の記入漏れ'])
             if l4['relationship']== 'False' or l4['relationship']== '0':
                 list4.append([8,'「続柄」の記入漏れ'])
@@ -593,7 +593,7 @@ def error_Msg_Sheet(err_obj,wb2):
         tgt_sh.column_dimensions['B'].width= 20
         #n=len(alt_data)
         n=2
-        pprint.pprint('alt_data={}'.format(alt_data)) 
+        #pprint.pprint('alt_data={}'.format(alt_data)) 
         for l5 in alt_data:
             for l6 in l5:
                 if l6==l5[0]:

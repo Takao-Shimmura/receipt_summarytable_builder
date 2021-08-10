@@ -80,6 +80,10 @@ Index
         </template>
       </template>
     </ul> 
+    <div class="form-group">
+      
+      <button type="submit"  class="btn btn-primary" v-on:click="reDl_file">再度ファイル受信</button>
+              </div>
 
 
 
@@ -118,11 +122,12 @@ Vue.component('mycomp', {
         let self=this;
         $.ajax({//←テキストデータをバックエンドのpython側から戻り値として
           //送ってもらう時は、axiosよりも、なぜか$.ajaxのほうが成功する
-        method: "GET",
-        url: "/preget",
+            method: "GET",
+            url: "/preget",
 
         success:function(data1) {
-          self.errData=data1;
+          self.errData=data1['alt_data'];
+          self.title_msg=data1['alt_data2'];
           Vue.nextTick(() => {
 
             $('[data-toggle="tooltip').tooltip();
@@ -133,6 +138,36 @@ Vue.component('mycomp', {
         },
         error:function () {
           self.title_msg='送信途中で失敗';
+        }
+      });
+      },
+      reDl_file:function(e){
+        /* e.preventDefault(); */
+        let formData= new FormData();
+        let self=this;
+        formData.append('alt_data_relay',JSON.stringify(self.errData));
+        //注目
+        self.title_msg=formData.get('alt_data_relay')+'あれ？'; 
+        $.ajax({//←テキストデータをバックエンドのpython側から戻り値として
+          //送ってもらう時は、axiosよりも、なぜか$.ajaxのほうが成功する
+        method: "POST",
+        url: "/reget",
+        data:formData,
+        processData:false,
+        contentType:false,
+        success:function(data2) {
+          self.title_msg='';
+          self.errData=data2['alt_data2'];
+          Vue.nextTick(() => {
+
+            $('[data-toggle="tooltip').tooltip();
+            /* title() {
+            return $(this).attr('title');
+            } */
+            })
+        },
+        error:function () {
+          //self.title_msg='送信途中で失敗2';
         }
       });
       },

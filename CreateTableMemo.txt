@@ -34,9 +34,9 @@ CREATE TABLE "calculate" (
     "title_AcupOrMass" VARCHAR(255),
     "insurerNo_Str" VARCHAR(255),
     "insuraCodeNo_Str" VARCHAR(255),
-    "amount_Int"  INTEGER,
-    "copayment_Int" INTEGER,
-    "billingAmount_Int"  INTEGER,
+    "amount_Str"  VARCHAR(255),
+    "copayment_Str" VARCHAR(255),
+    "billingAmount_Str"  VARCHAR(255),
     "relationship" VARCHAR(255),
     "sheetName" VARCHAR(255),
     "therapistName" VARCHAR(255),
@@ -58,9 +58,9 @@ CREATE TABLE "error_msg" (
     "title_AcupOrMass" VARCHAR(255),
     "insurerNo_Str" VARCHAR(255),
     "insuraCodeNo_Str" VARCHAR(255),
-    "amount_Int"  INTEGER,
-    "copayment_Int" INTEGER,
-    "billingAmount_Int"  INTEGER,
+    "amount_Str"  VARCHAR(255),
+    "copayment_Str" VARCHAR(255),
+    "billingAmount_Str"  VARCHAR(255),
     "relationship" VARCHAR(255),
     "sheetName" VARCHAR(255),
     "therapistName" VARCHAR(255),
@@ -130,9 +130,9 @@ CREATE TABLE "calculate" (
     "title_AcupOrMass" VARCHAR(255),
     "insurerNo_Str" VARCHAR(255),
     "insuraCodeNo_Str" VARCHAR(255),
-    "amount_Int"  SERIAL,
-    "copayment_Int" SERIAL,
-    "billingAmount_Int"  SERIAL,
+    "amount_Str"  VARCHAR(255),
+    "copayment_Str" VARCHAR(255),
+    "billingAmount_Str"  VARCHAR(255),
     "relationship" VARCHAR(255),
     "sheetName" VARCHAR(255),
     "therapistName" VARCHAR(255),
@@ -153,9 +153,9 @@ CREATE TABLE "error_msg" (
     "title_AcupOrMass" VARCHAR(255),
     "insurerNo_Str" VARCHAR(255),
     "insuraCodeNo_Str" VARCHAR(255),
-    "amount_Int"  SERIAL,
-    "copayment_Int" SERIAL,
-    "billingAmount_Int"  SERIAL,
+    "amount_Str"  VARCHAR(255),
+    "copayment_Str" VARCHAR(255),
+    "billingAmount_Str"  VARCHAR(255),
     "relationship" VARCHAR(255),
     "sheetName" VARCHAR(255),
     "therapistName" VARCHAR(255),
@@ -195,6 +195,6 @@ DROP TABLE "calculate";
 DELETE FROM "insurerdata";
 DELETE FROM "search";
 DELETE FROM "error_msg";
-DELETEP FROM "calculate";
+DELETE FROM "calculate";
 ダミーコマンド
 
