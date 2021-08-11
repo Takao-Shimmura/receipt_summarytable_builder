@@ -218,12 +218,20 @@ Vue.component('mycomp', {
             processData:false,
             contentType:false,
         success:function(data){
-          if (typeof(data)!='string' && data['success_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
-                        self.title_msg = data['success_msg']; 
-                    }else if(typeof(data)=='string' && self.dialog_flg=='False'){ 
-                      self.title_msg = data;
-                      
-                    }else{
+          if (data['failed_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
+                        self.title_msg = data['failed_msg'] ; 
+                    }else if(data['process_msg'] ){ //←このelse if節は、python側で読み込んだxlsxファイルがすべて読み込めなかったときのもの
+                        self.title_msg = data['process_msg'];
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
+
+                    }else{//←このelse if節は、'process_msg'も'failed_msg'もajax通信で返ってこなかったとき。
+                      //つまり、python側で読み込んだxlsxファイルが１シート以上読み込めて、year_month_dialogに
+                      //遷移するためのもの
                       self.year_vm = data['year_Int'] ;
                       self.month_vm = data['month_Int'] ;
                       self.therapistName_vm= data['therapistName'] ;
@@ -258,8 +266,8 @@ Vue.component('mycomp', {
             processData:false,
             contentType:false,
         success:function(data){
-          if (data['success_msg'] ) {
-                        self.title_msg = data['success_msg'] ;
+          if (data['process_msg'] ) {
+                        self.title_msg = data['process_msg'] ;
                         self.downloadFileName=data['dLFile'] ;
                         self.errData=data['alert_data'];
                         

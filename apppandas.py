@@ -12,6 +12,7 @@ from datetime import datetime
 import os
 import pathlib
 import pytz
+import pprint
 
 from sqlalchemy import create_engine, Column, Integer, String, \
     Text, DateTime, ForeignKey
@@ -59,6 +60,8 @@ def index():
         if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
             pass_obj.unlink()
     global df_new
+    #pprint.pprint('pre df_new={}'.format(df_new))
+    
     df_new={}
 
     #データベースもリセット
@@ -89,6 +92,7 @@ def get_msg():
 # アップロード機能
 @app.route('/upload', methods=['POST'])
 def upload():
+        parsonal_data={}
         # ↓　このif節は・・・
         # 申請の年・月・施術者名・施術所名・登録記号番号を入力する
         # ダイアログを通過した場合は、dialog_flg＝True ＞＞よってif節以下は実行されない
@@ -104,7 +108,8 @@ def upload():
             # ↓ 参照元のサンプルコードでは以下の様だったが、flask.がエラーとなったため削除
             #if 'file' not in flask.request.files:
             if 'file' not in request.files:
-                return '読み込めないファイル形式です　アップロード失敗'
+                parsonal_data['failed_msg']='読み込めないファイル形式です　アップロード失敗'
+                return jsonify(parsonal_data)
 
             # fileの取得（FileStorage型で取れる）
             # https://tedboy.github.io/flask/generated/generated/werkzeug.FileStorage.html
@@ -122,7 +127,8 @@ def upload():
             suffix = pathlib.Path(fs.filename).suffix
             #拡張子チェック機能３↓↓(Excelファイルの拡張子であることを確認する段階)
             if not suffix in ALLOWED_EXTENSIONS:
-                return "保存できないファイル形式です {}".format(suffix)
+                parsonal_data['failed_msg']="保存できないファイル形式です {}".format(suffix)
+                return jsonify(parsonal_data)
             else:
                 # ファイルを保存
                 fs.save(fs.filename)
@@ -143,14 +149,13 @@ def upload():
                         dfdic.columns=range(1,shp[1]+1)
                         global df_new #グローバル変数に値を入れられるようにする
                         # ↑これでdialogから戻ってきても、df_newの値は保持される
+                        #pprint.pprint('pre df_new={}'.format(df_new)) 
                         df_new[dfsh]=dfdic ###これで得られたdf_newは、各シート名を[キー]；dataframeを【値】とする辞書
                     
                     # ↓ アップロードされたファイルを、情報を読み取った後に削除
                     # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
                     # pathlibライブラリを用いたテクニック。
                     pass_obj.unlink()
-
-        parsonal_data={}
 
         #　↓　変数condDictに、検索条件の辞書を込める
         condDict = get_search_condition()
@@ -181,90 +186,112 @@ def upload():
                         d_dic={}
                         d_dic['sheetName'] =dfN_Key # シート名を入れておく
                         d_dic['title_AcupOrMass'] =cD['title_AcupOrMass']# はきorマ　を入れておく
-                        # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
-                        # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
-                        if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
-                            int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
-                            get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
-                            int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
-                            int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
-                            get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
-                            int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                            get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
-                        # ↓「年」がyear month dialogで確認した数字とあっていなければ'False'を入力        
-                            if flg1 !='False':
-                                #app.logger.info('year_f={}'.format(year_f))
-                                #app.logger.info('year={}'.format(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                #get_cellno_2list(cD['yearTop_Cell'])[1]] ))
-                                if int(year_f) ==\
+                        # ↓「年」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                        #nanだったときには'False'
+                        if not pd.isnull(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                            get_cellno_2list(cD['yearTop_Cell'])[1]] ) and \
+                            not pd.isnull(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                            get_cellno_2list(cD['year1st_Cell'])[1]]) and\
+                            not pd.isnull(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                            get_cellno_2list(cD['yearLast_Cell'])[1]]):
+
+                            # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                            # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
+                            if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
+                                int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                                get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
                                 int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]])) :
+                                get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
+                                int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                                get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
+                                int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
+                            # ↓「年」がyear month dialogで確認した数字とあっていなければ'False'を入力        
+                                if flg1 !='False':
+                                    #app.logger.info('year_f={}'.format(year_f))
+                                    #app.logger.info('year={}'.format(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    #get_cellno_2list(cD['yearTop_Cell'])[1]] ))
+                                    if int(year_f) ==\
+                                    int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]])) :
+                                        d_dic['year_Str'] =\
+                                        str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                        get_cellno_2list(cD['yearTop_Cell'])[1]] )))
+                                    else:
+                                        d_dic['year_Str'] ='False'
+                                else:
+                                    """ s=df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]]
+                                    app.logger.info('s.type={}'.format(type(s))) """
                                     d_dic['year_Str'] =\
                                     str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
                                     get_cellno_2list(cD['yearTop_Cell'])[1]] )))
-                                else:
-                                    d_dic['year_Str'] ='False'
                             else:
-                                """ s=df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]]
-                                app.logger.info('s.type={}'.format(type(s))) """
-                                d_dic['year_Str'] =\
-                                str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]] )))
+                                d_dic['year_Str'] ='False'
                         else:
                             d_dic['year_Str'] ='False'
-                        
-                        # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
-                        # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
-                        if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
-                            int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
-                            get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
-                            int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
-                            int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
-                            get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
-                            int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                            get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
-                        # ↓「月」がyear month dialogで確認した数字とあっていなければ'False'を入力    
-                            if flg1 !='False':
-                                if int(month_f) ==\
+                        # ↓「月」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                        #nanだったときには'False'
+                        if not pd.isnull(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                            get_cellno_2list(cD['monthTop_Cell'])[1]] ) and \
+                            not pd.isnull(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                            get_cellno_2list(cD['month1st_Cell'])[1]]) and\
+                            not pd.isnull(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                            get_cellno_2list(cD['monthLast_Cell'])[1]]):    
+                            # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                            # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
+                            if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
+                                int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                                get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
                                 int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                get_cellno_2list(cD['monthTop_Cell'])[1]] )):
+                                get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
+                                int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                                get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
+                                int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
+                            # ↓「月」がyear month dialogで確認した数字とあっていなければ'False'を入力    
+                                if flg1 !='False':
+                                    if int(month_f) ==\
+                                    int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )):
+                                        d_dic['month_Str'] =\
+                                        str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                        get_cellno_2list(cD['monthTop_Cell'])[1]] )))
+                                    else:
+                                        d_dic['month_Str'] ='False'
+                                #str(int(float・・・とややこしい処理をしているのは、1⃣pandasで
+                                #読み込む際に、数値を勝手に「浮動小数点：float」で読み込んで
+                                # dataframe化されるがある（例「2」のはずが「2.0」と読み込む）
+                                # そのために、2⃣そのデータがstrによって文字列化されてしまうと、
+                                # (例「'2.0'」)3⃣それをさらに、intで整数化しようとするとエラーが出る
+                                #参考⇒https://qiita.com/ringCurrent/items/1df058bb203374a4b294
+                                #これらを回避するために、float関数を用いる
+
+
+                                else:
                                     d_dic['month_Str'] =\
                                     str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
                                     get_cellno_2list(cD['monthTop_Cell'])[1]] )))
-                                else:
-                                    d_dic['month_Str'] ='False'
-                            #str(int(float・・・とややこしい処理をしているのは、1⃣pandasで
-                            #読み込む際に、数値を勝手に「浮動小数点：float」で読み込んで
-                            # dataframe化されるがある（例「2」のはずが「2.0」と読み込む）
-                            # そのために、2⃣そのデータがstrによって文字列化されてしまうと、
-                            # (例「'2.0'」)3⃣それをさらに、intで整数化しようとするとエラーが出る
-                            #参考⇒https://qiita.com/ringCurrent/items/1df058bb203374a4b294
-                            #これらを回避するために、float関数を用いる
-
-
                             else:
-                                d_dic['month_Str'] =\
-                                str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                get_cellno_2list(cD['monthTop_Cell'])[1]] )))
+                                d_dic['month_Str'] ='False'
                         else:
                             d_dic['month_Str'] ='False'
 
                         for sC,cA in sC2cAdic.items():
                         # 例）名前　欄が空白でなければ{'name_Cell':名前}／空白ならば{'name_Cell':'False'}
                             
+                            # これから判定しなければならないdataframeの各セルのデータを以下の
+                            # cellV1に予め込めておく
+                            cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                get_cellno_2list(cD[sC])[1]]
                             # pandasで取得したdataFrameのなかで、欠損値である'nan'は扱いが難しく、
                             # if文で判定するためには、 if cA=='nan' や　if cA==str('nan')では
                             # 判定してくれない（しかも構文エラーにならないので、ややこしい）
                             #　判定するためにはif pd.isnull(?):とする
                             # （欠損値nanならば’true’／pdは　import pandas as pd　より）
                             # 参照⇒https://kagglenote.com/misc/pandas_nan_judge/
-                            cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                get_cellno_2list(cD[sC])[1]]
                             if not pd.isnull(cellV1) :
 
                                 
@@ -322,8 +349,8 @@ def upload():
                                 # うまくいったとしても、cellV1が文字列'0'だったら'False'が入る。
                                 # for文から抜け出す　参考⇒https://note.nkmk.me/python-break-nested-loops/
                                 # カッコと論理演算子　参考⇒https://dot-blog.jp/news/python-boolean-operations-bool/
-                                elif ('amount_Str' in cA or 'copayment_Str' in cA \
-                                    or 'billingAmount_Str' in cA) and flg1 !='False':
+                                elif 'amount_Str' in cA or 'copayment_Str' in cA \
+                                    or 'billingAmount_Str' in cA :
                                     try:
                                         d_dic[cA] = str(int(float(cellV1)))
                                         if str(int(float(cellV1)))=='0':
@@ -379,7 +406,7 @@ def upload():
                         ses.commit()
                         ses.close()
         
-        parsonal_data['success_msg']='総括票　作成中・・・' 
+        parsonal_data['process_msg']='総括票　作成中・・・' 
         
         #　↓　ブックの複製　参照⇒https://neko-py.com/python-excel-write-book
         wb = openpyxl.load_workbook(filename='soukatsuTemp.xlsx')
@@ -391,9 +418,7 @@ def upload():
         template_sheet = wb['総括票（Ⅰ）(ひな形　禁削除)']
         # ↓　総括表１の送付先（soukatsu1Desti）だけを、重複なくリスト化したものがsoukatsu1Desti_List
         soukatsu1Desti_List = soukatsu1Desti_List_set(sortInsList)
-        #re = ses.query(Calculate).all()
-        #ses.close()
-        #calcu_list2 = get_by_list(re)
+
         re = ses.query(Calculate).all()
         loadD_obj = get_by_list(re)
         ses.query(Calculate).delete()# 復帰
@@ -594,7 +619,11 @@ def upload():
         # ↓　作成された.xlsxファイルに、作成年月日でファイル名を命名する
         # ↓　時刻の2桁表示（ゼロ埋め）は.zfill()で行う
         # 参考⇒https://note.nkmk.me/python-zero-padding/
-        dLFileName='総括票 令和'+year_f+'年'+month_f+'月分　'+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
+        try:
+            dLFileName='総括票 令和'+year_f+'年'+month_f+'月分　'+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
+        except:
+            dLFileName='すべてのシートが読み込み不可'+ '.xlsx'
+        
         wb.save(dLFileName)
         wb.close() 
         parsonal_data['dLFile']=dLFileName
