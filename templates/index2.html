@@ -13,9 +13,8 @@ Index
 
 
 {% block content %}
-<img src="/static/123.jpg?202107291601" class="img-fluid" alt="Responsive image"/>
-<h4 class="mb-1 " id="msg">{{message}}</h4>
 
+<h4 class="mb-1 " id="msg">{{message}}</h4>
 <!-- Vue.js container -->
 <div id="app" class="m-3">
     <mycomp/>
@@ -30,62 +29,138 @@ Index
 <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
   <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
- 
-  <div class="form-group">
-    <label >{{title_msg}}</label>
-    <button type="submit"  class="btn btn-primary" v-on:click="preDl_file">ファイル受信</button>
+  <label>{{title_msg}}</label>
+  <hr/>
+  <template v-if="formCloseFlg=='False'">
+  <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
+      <div class="form-group ">
+        
+        <div class="input-group "><!-- input-group-lg   btn-lg-->
+          <!-- <div class="row" > -->
+            <div class="custom-file " >
+    <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+              <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
+              <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
             </div>
-<!-- Error message  -->
-<!-- <div class="card" >
-  <div class="card-body">
-  <img class="card-img"  src="/static/1.png">
+          <!-- </div> -->
+          <div class="input-group-append active">
+            <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+          </div>
+        </div>
+      </div>
+    <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+      <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
+  
+  </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
+  </template>
+  <!-- Error message  -->
+  <template v-if="errOpenFlg=='True'">
+    <template v-if="errData=='False'">
+      <label>※読み込めなかったシートはありませんでした。</label>
+      <div class="form-group">
+        <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+        <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+        ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+        参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+      </div>
+    </template>
+    <template v-else>
+ 
+      <label>👇以下「エラーメッセージ」です</label>
+        　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
+        <ul class="list-group border-left border-right border-bottom list-unstyled">
+          <template v-for="items in errData">
+            <li class="border-top" >
+              {{items[0]}}
+            </li>
+            <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
+                <ul>
+                  <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
+                  <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
+                  <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
+                  によるリスト作成で「tooltip」がうまく作れない。
+                  よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
+                  コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
+                  （Error messegeページが開くタイミング）で実行されるようにした。 -->
+                  <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
+                  <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
+                  反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
+                  　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
+                  【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
+                  【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
+
+                  <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
+                data-toggle="tooltip" data-html="true" 
+                v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202108061354&quot; />'"> 
+                    <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
+                      参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
+                    <template v-if="item[0]==''">
+                      {{''}}
+                      
+                    </template>  
+                    <template v-else>
+                      {{'【'+item[0]+'】'+item[1]}}
+                    </template> 
+                  </li>
+                <ul>  
+            </template>
+          </template>
+        </ul> 
+        <div class="form-group">
+          <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+          <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+          ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+          参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+        </div>
+    </template>
+  </template>
+
+  <!-- year_month Dialog -->
+  <div class="modal fade" id="year_month">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="card">
+          <div class="card-header">
+                    <h4 class="card-title">
+                        以下を確認して「申請書作成」ボタンを押してください
+                    </h4>
+                    <small class="form-text text-muted ">
+                          ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
+                    </small>
+          </div>
+          <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+          <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+          <div class="card-body">
+            <div class="form-group form-inline">
+                        <label class="col-2" for="year">令和</label>
+                        <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
+                        <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
+            </div>           
+          
+            <div class="form-group row">
+                        <label class="col-5" for="therapist">施術者名</label>
+                        <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
+            </div>
+            <div class="form-group row">
+                        <label class="col-5" for="treatmentHos">施術所名</label>
+                        <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
+            </div>
+            <div class="form-group row">
+                        <label class="col-5" for="registerNo">登録記号・番号</label>
+                        <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
+            </div>
+            <div class="form-group">
+              <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
+              <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+              <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+              ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+              参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+            </div>
+
+          </div>
+      </div>
+    </div>
   </div>
-</div> -->
-    <label>👇以下「エラーメッセージ」です</label>
-      　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
-    <ul class="list-group border-left border-right border-bottom list-unstyled">
-      <template v-for="items in errData">
-        <li class="border-top" >
-          {{items[0]}}<!-- {{url_for('static', filename='123.jpg')}} -->
-        </li>
-        <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
-            <ul>
-              <!-- {% set jpg_url={{url_for('static', filename='123.jpg')}} %} -->
-              
-              <!--↓bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
-              <!-- ↓　但し、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
-              <!-- <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                data-toggle="tooltip" data-html="true" 
-                v-bind:data-original-title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;&#39;{{url_for('static', filename='123.jpg')}}&#39;&quot; class=&quot;img-fluid&quot; alt=&quot;Responsive image&quot;>'"> -->
-                <!-- <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                data-toggle="tooltip" data-html="true" 
-                v-bind:data-original-title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/123.jpg&quot;>'">  --> 
-                <!-- <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                data-toggle="tooltip" data-html="true" 
-                v-bind:data-original-title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;'/static/'+item[0]+'.jpg?202107291602'&quot; &#47;>'"> -->  
-                <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                data-toggle="tooltip" data-html="true" 
-                v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202107291603&quot; />'"> 
-                <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時に「v-bind:」は必要　参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  -->
-                <template v-if="item[0]==''">
-                  {{''}}
-                  
-                </template>  
-                <template v-else>
-                  
-                  {{'【'+item[0]+'】'+item[1]}}
-                </template> 
-              </li>
-            <ul>  
-        </template>
-      </template>
-    </ul> 
-    <div class="form-group">
-      
-      <button type="submit"  class="btn btn-primary" v-on:click="reDl_file">再度ファイル受信</button>
-              </div>
-
-
 
 </div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
 <!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->    
@@ -96,8 +171,6 @@ Index
 <!-- * Vue.js Component Script * -->
 <!-- ******************** -->
 <script>
-
-  
 //database view
 
 Vue.component('mycomp', {
@@ -105,86 +178,210 @@ Vue.component('mycomp', {
     data:function(){
 
         return{  
-                title_msg:'download 試行開始',
-                downloadFileName: '',  //←この一行のdownloadFileという変数は
-                errData:null,
+                uploadFile: null,  //←この一行のuploadFileという変数は
                 //ajax通信するときに用意しておかなければならない⇒を参照　http://tech.aainc.co.jp/archives/10714
-                jpg_url:null,
-                
+                dialog_flg: 'False', //←このdialog_flgに入れておく値は、Boolean値ではなく、文字列としておく。
+                //　そうでないと、バックエンドのpython側に渡したときにうまく認識してくれない
+                year_vm:'',
+                month_vm:'', 
+                therapistName_vm:'', 
+                treatmentHosName_vm:'', 
+                registerNo_Str_vm:'', 
+                title_msg:'👇申請書のエクセルファイルを選択',
+                formCloseFlg: 'False',  //←このformCloseFlgという変数は
+                //ajax通信するときに入力フォームを閉じておくために必要。
+                downloadFileName:'',//←この一行のdownloadFileNameという変数は
+                //ajax通信するときに用意しておかなければならない⇒を参照　http://tech.aainc.co.jp/archives/10714
+                errOpenFlg: 'False',//Error Messageページを開くためのフラグ
+                errData:null,//Error Messageで表示するためのデータ。リストinリストになっている。
+                df_new2_dict:{},//pandasで読み込んだdataframeを、バックエンドであるpython側で
+                //保持しておけないので、フロントエンドであるこちら側（index2）で一時的にあずかる。
               }
     },
     methods:{
-      preDl_file:function(e){
-        /* e.preventDefault(); */
-        /* let formData= new FormData(); */
-        /* let data={downloadFile:self.downloadFile} */
-        /* let blobData= new Blob(); */
-        let self=this;
-        $.ajax({//←テキストデータをバックエンドのpython側から戻り値として
-          //送ってもらう時は、axiosよりも、なぜか$.ajaxのほうが成功する
-            method: "GET",
-            url: "/preget",
-
-        success:function(data1) {
-          self.errData=data1['alt_data'];
-          self.title_msg=data1['alt_data2'];
-          Vue.nextTick(() => {
-
-            $('[data-toggle="tooltip').tooltip();
-            /* title() {
-            return $(this).attr('title');
-            } */
-            })
-        },
-        error:function () {
-          self.title_msg='送信途中で失敗';
-        }
-      });
-      },
-      reDl_file:function(e){
-        /* e.preventDefault(); */
+      selectedFile: function(e) {// この関数は⇒を参照　http://tech.aainc.co.jp/archives/10714
+                // 選択された File の情報を保存しておく(input)
+                e.preventDefault();
+                let files = e.target.files;
+                this.uploadFile = files[0];
+            },
+            //submit file 1st 
+      read_file:function(e){
         let formData= new FormData();
+        formData.append('file', this.uploadFile);// このthis.uploadFileは⇒を参照　http://tech.aainc.co.jp/archives/10714
+        formData.append('dialogFlg', this.dialog_flg);
+        this.formCloseFlg='True';
+        this.title_msg = 'アップロード中・・・そのままお待ちください。';
         let self=this;
-        formData.append('alt_data_relay',JSON.stringify(self.errData));
-        //注目
-        self.title_msg=formData.get('alt_data_relay')+'あれ？'; 
-        $.ajax({//←テキストデータをバックエンドのpython側から戻り値として
-          //送ってもらう時は、axiosよりも、なぜか$.ajaxのほうが成功する
-        method: "POST",
-        url: "/reget",
-        data:formData,
-        processData:false,
-        contentType:false,
-        success:function(data2) {
-          self.title_msg='';
-          self.errData=data2['alt_data2'];
-          Vue.nextTick(() => {
+        $.ajax({
+            type:'POST',
+            url:'/upload',
+            data:formData,
+            processData:false,
+            contentType:false,
+        success:function(data){
+          if (data['failed_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
+                        self.title_msg = data['failed_msg'] ; 
+                    }else if(data['process_msg'] ){ //←このelse if節は、python側で読み込んだxlsxファイルがすべて読み込めなかったときのもの
+                        self.title_msg = data['process_msg'];
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
 
-            $('[data-toggle="tooltip').tooltip();
-            /* title() {
-            return $(this).attr('title');
-            } */
-            })
-        },
-        error:function () {
-          //self.title_msg='送信途中で失敗2';
+                    }else{//←このelse if節は、'process_msg'も'failed_msg'もajax通信で返ってこなかったとき。
+                      //つまり、python側で読み込んだxlsxファイルが１シート以上読み込めて、year_month_dialogに
+                      //遷移するためのもの
+                      self.year_vm = data['year_Int'] ;
+                      self.month_vm = data['month_Int'] ;
+                      self.therapistName_vm= data['therapistName'] ;
+                      self.treatmentHosName_vm= data['treatmentHosName'] ;
+                      self.registerNo_Str_vm= data['registerNo_Str']; 
+                      self.df_new2_dict= data['df_new2']; 
+                      $('#year_month').modal('show');
+                          } 
+
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='送信失敗';
+            
         }
-      });
+        });
+      },
+      read_file2nd:function(e){
+        $('#year_month').modal('hide')
+        this.dialog_flg='True'
+        let formData= new FormData();
+        formData.append('dialogFlg', this.dialog_flg);
+        formData.append('year_fixed', this.year_vm);
+        formData.append('month_fixed', this.month_vm);
+        formData.append('therapistName_fixed', this.therapistName_vm);
+        formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
+        formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
+        formData.append('df_new2', JSON.stringify(this.df_new2_dict));
+        let self=this;
+        $.ajax({
+            type:'POST',
+            url:'/upload',
+            data:formData,
+            processData:false,
+            contentType:false,
+        success:function(data){
+          if (data['process_msg'] ) {
+                        self.title_msg = data['process_msg'] ;
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
+                      
+                    }
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='作成　失敗';
+            
+        }
+        });
+      },
+      load_file:function(e){
+        let self=this;
+        let formData= new FormData();
+        formData.append('filename', self.downloadFileName);
+        
+        axios({//ファイルのダウンロードには、なぜか$.ajaxは向かない。
+        method: "POST",
+        url: "/download",
+        data:formData,
+        dataType: 'binary',
+        responseType:'blob',//'binary'と'blob'に設定しないと、ファイルの受け渡しができない
+        //参照⇒https://teratail.com/questions/215360
+      })
+        .then(function(response) {//参照⇒https://tkkm.tokyo/post-177/
+          if (window.navigator.msSaveOrOpenBlob) {
+            // for IE,Edge⇒・・・のはずが、IEでは、ひらくことはできてもダウンロードは不可
+            window.navigator.msSaveOrOpenBlob(response.data, self.downloadFileName);
+          } else {
+          let xlsx_file = response.data;
+          let blob = new Blob([xlsx_file], {
+            type:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          });
+          let link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.setAttribute('download',self.downloadFileName); 
+          /* link.click(); */
+
+          //↓↓　最後のlink.click()が終わってから、del_file()に行くために
+          //Promiseにて順番に処理　↓参考
+          //https://www.youtube.com/watch?v=kbKIENQKuxQ
+          //https://sbfl.net/blog/2016/07/13/simplifying-async-code-with-promise-and-async-await/
+          new Promise (resolve =>{
+                          link.click();
+                          resolve();
+                        }).then(()=>(self.del_file(),
+                        self.errOpenFlg='True',
+                        Vue.nextTick(() => {
+        //errOpenFlg='True'となったタイミングで・・・つまりError messageページを
+        //表示するタイミングで、HTMLが作成完了するのを待って、tooltipの作成に入る
+        //そうしないと、for文を用いて作るリストの「tooltip」がうまく作成できない。
+        //参照⇒https://blog.capilano-fw.com/?p=4773
+                  $('[data-toggle="tooltip"]').tooltip({
+                  
+                        });
+              })));
+          }
+        })
+        .catch(function () {
+          self.title_msg='ダウンロード失敗';
+        });
+      },
+      del_file:function(e){
+        
+        let self=this;
+        $.ajax({
+            type:'GET',
+            url:'/dLfileDel',
+            /* processData:false,
+            contentType:false, */
+        success:function(data){
+              self.title_msg = data; 
+
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='消去　失敗';
+            
+        }
+        });
       },
     },
-    /* ↓　動的に「tooltip」を作成するために「watch」は必要
+        /* ↓　動的に「tooltip」を作成するためのVue.js内のメソッドである「watch」。
+        errData変数が変更されるたびに、中の関数などが動いてくれる仕掛け
     参照⇒https://blog.capilano-fw.com/?p=4773
-    但し、上記HPのサンプルにあった「mounted」「title()」は、省略しても動いてくれた */
-           /*  watch: {
-              item:function() {
-              
+    しかし、上記HPのサンプルにあった「watch」「mounted」「title()」は、
+    省略しても動いてくれた */
+/*     watch: {
+              errData() {
+
+                    Vue.nextTick(() => {
+
+                        $('[data-toggle="tooltip"]').tooltip();
+                        
+                    })
 
                 }
-            }, */
-            /* mounted() {
-                this.errData = data1;
+            },
+            mounted() {
+              Vue.nextTick(() => {
+                  $('[data-toggle="tooltip"]').tooltip();
+              })
             } */
-
 });
 //start Vue.
 new Vue({
@@ -198,5 +395,7 @@ new Vue({
 
 
 {% block footer %}
-copyright 2020 shim tko.
+<!-- copyright 2021 <img src ="/static/logo.jpg?202109060605"/> -->
+copyright 2021 <img src ="/static/logo.jpg?202108061354"/>
+
 {% endblock %}

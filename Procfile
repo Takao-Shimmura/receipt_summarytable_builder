@@ -1,1 +1,1 @@
-web: gunicorn apppandas:app
+web: gunicorn app:app
