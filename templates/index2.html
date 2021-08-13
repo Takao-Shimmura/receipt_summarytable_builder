@@ -262,6 +262,8 @@ Vue.component('mycomp', {
         formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
         formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
         formData.append('df_new2', JSON.stringify(this.df_new2_dict));
+        //↑バックエンド側（python）から一時的に預かったdataframeを
+        //再び戻すために、再度json化してformdataに格納する
         let self=this;
         $.ajax({
             type:'POST',

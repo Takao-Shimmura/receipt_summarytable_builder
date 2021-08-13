@@ -1,4 +1,25 @@
 #!python3.9.1
+
+#　1⃣herokuにデプロイした時に、
+# 　　●多ユーザー同時接続による変数のバッティング
+# 　　●データベースの反応が遅いために、calculateテーブルや
+# 　　　error_msgテーブルからの書き込み/読み込みエラー
+#　　などが生じたために、それを解消するため
+#     ●sessionの導入
+#     ●dataframeデータを2重にjson化して、フロントエンド側（index2）にいったん預ける
+#     ●calculate/error_msgテーブルを廃止して、変数に込める
+#    などの対策を講じた。
+# 　
+#　2⃣構成ファイルはapp.py--index2.html--myutil2.py。
+#       なお、calculate/error_msgテーブルを用いる手法は後々参考になるので、
+#       apppandas.py--index.html--myutil.pyに残してある
+
+#　3⃣メインのプログラムはapp.pyなので、デプロイ前にProcfileを確認しておく。
+#       web: gunicorn app:app　の前の方のappがapp.pyのことを指す
+
+#  4⃣ローカルで動く環境と、デプロイ時の環境で変えなきゃならないところは、
+#  ### で印をつけてある（データベースのURIと最後の行のlocalhost）
+
 from flask import Flask, render_template, request, session, \
     redirect, jsonify, current_app, g,send_file
 #import psycopg2
@@ -21,19 +42,23 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.elements import Null
 
-from myutil2 import User,Calculate,ErrorMsg,Search_condition,InsurerData,\
-    get_dic_schCond2calAttr,get_search_condition,get_by_list,\
+from myutil2 import Search_condition,InsurerData,\
+    get_dic_schCond2calAttr,get_search_condition,\
         get_cellno_2list,define_soukatsu1Desti,sort_insureName_4Sokatsu1_fromloadD_obj,\
-        soukatsu1Desti_List_set,get_soukatsu1Desti_count,get_soukatsu1Desti_insur_dic,\
+        soukatsu1Desti_List_set,get_soukatsu1Desti_insur_dic,\
         kensuu_insert,kingaku_insert,koukikourei_No_Sort,\
         error_Msg_Sheet
 
 
-#　↓　herokuにデプロイすると、画像が読み込めない。
+#　↓　herokuにデプロイすると、画像ファイルが読み込めない。
 # これを解消するためにflaskがheroku内でインスタンス化される時に、
 # 静的なファイルのディレクトリを記述して明確化する。
 # 参考⇒https://qiita.com/go_new_innov/items/222a3ed92f5ed093f462
 app = Flask(__name__,static_folder='./static')
+#　上記でも解消されなかった！
+# ⇒原因は、画像ファイルの拡張子jpgが、
+# 大文字だったため。（Xnviewで編集したため)。小文字に直したら解消した
+
 
 app.secret_key = b'random string...'
 
@@ -46,10 +71,6 @@ engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e1
 #　↓　ローカルのSQLite接続用パス 
 ###engine = create_engine('sqlite:///sample.sqlite3')
 
-#df_new={} #グローバル変数として追加　
-#pandasを用いてエクセルを読み込んで作成されたデータフレーム
-#を、辞書として整理したものを入れておく変数
-
 # access top page.
 @app.route('/',methods=['GET'])
 def index():
@@ -59,34 +80,30 @@ def index():
     for pass_obj in path.iterdir():
         if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
             pass_obj.unlink()
-    #global df_new
-    #pprint.pprint('pre df_new={}'.format(df_new))
+    # session['user_access_time']は、ユーザーごとに、
+    # トップページにアクセスしてきた日時を振り分けて、IDの様に用いるためのもの。
+    # このsession情報は、ユーザーのPCのcookieに保存され、
+    # HPが閉じられるなどして、接続が終わるまで保存され続ける。
+    # 再び、トップページに戻ると、新しいアクセス日時に更新されてリセットされる。
+    # 参考⇒「Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方」P109        
+    now = datetime.now(pytz.timezone('Asia/Tokyo'))
+    session['user_access_time']=str(now.month).zfill(2)+'月' \
+        +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' \
+             + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2)+'秒' 
     
-
-
-    #データベースもリセット
-    """ Session = sessionmaker(bind=engine)
-    ses = Session() """
-
-    """ ses.query(Calculate).delete()# 復帰
-    ses.commit()# 復帰
-    ses.close()# 復帰
-
-    ses.query(ErrorMsg).delete() #復帰
-    ses.commit()#復帰
-    ses.close()# 復帰 """
     return render_template('index2.html',\
             title = '新潟県鍼灸マッサージ師会　公認',\
             message = '保険申請書　総括票作成　ホームページ')
-    """ return render_template('index.html',\
-            title = '新潟県鍼灸マッサージ師会　公認',\
-            message = '保険申請書　総括票作成　ホームページ') """
+
 
 
 # アップロード機能
 @app.route('/upload', methods=['POST'])
 def upload():
         df_new={}
+        #df_new={}・・・pandasを用いてエクセルを読み込んで作成された
+        #dataframeを、{「シート名」:「dataframe」}  という形の辞書として
+        # 整理したものを入れておく変数
         parsonal_data={}
         # ↓　このif節は・・・
         # 申請の年・月・施術者名・施術所名・登録記号番号を入力する
@@ -125,33 +142,45 @@ def upload():
                 parsonal_data['failed_msg']="保存できないファイル形式です {}".format(suffix)
                 return jsonify(parsonal_data)
             else:
+                """ # ファイルを保存
+                fs.save(fs.filename) """
                 # ファイルを保存
-                fs.save(fs.filename)
+                fs.save(session['user_access_time']+".xlsx")
                 # ↓以下はエクセルを読み込んで、データベースに登録する段取り
             
             path = pathlib.Path("./")    #相対パス指定
             for pass_obj in path.iterdir():
-                if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
-                    
-                    df = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
-                    
-                    for dfsh in df: ###各シートから読み込んだdataframeのインデックスとヘッダーを番号振りなおし
-                        ###Dataframe
-                        dfdic=df[dfsh]
-                        dfdic.reset_index(drop=True, inplace=True)
-                        shp=dfdic.shape
-                        dfdic.index=range(1,shp[0]+1)
-                        dfdic.columns=range(1,shp[1]+1)
-                        #global df_new #グローバル変数に値を入れられるようにする
-                        # ↑これでdialogから戻ってきても、df_newの値は保持される
-                        #pprint.pprint('pre df_new={}'.format(df_new)) 
-                        df_new[dfsh]=dfdic ###これで得られたdf_newは、各シート名を[キー]；dataframeを【値】とする辞書
-                    app.logger.info('df_new before={}'.format(df_new))
+                if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
+                    #  Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
+                    #{「シート名」:「dataframe」,「シート名」:「dataframe」}  という形の辞書として取り出される。
+                    # そのままdfという変数に辞書として入れておいてもいいのだが、
+                    #　ユーザーID代わりのsession['user_access_time']をキーとして
+                    #  {session['user_access_time']:{「シート名」:「dataframe」},...}
+                    # という辞書in辞書の形で変数dfに入れ込んでおく。
+                    # そうすることで、多数のユーザーが同時にアクセスしたときに、dfの中身
+                    # が勝手に書き換えられたり、バッティングすることを防ぐため
+                    df={}
+                    df[session['user_access_time']] = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
                     # ↓ アップロードされたファイルを、情報を読み取った後に削除
                     # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
                     # pathlibライブラリを用いたテクニック。
                     pass_obj.unlink()
-        
+
+                    #　↓　df[session['user_access_time']]内にある、各シートから読み込んだ
+                    # dataframeのインデックスとヘッダーを番号振りなおしして
+                    # 変数df_newに入れ込んでいく。
+                    # この時も、多ユーザー同時接続のバッティングを防ぐために、
+                    # ユーザーID代わりのsession['user_access_time']をキーとして
+                    # 格納しておく
+                    df_new[session['user_access_time']]={}
+                    for dfsh in df[session['user_access_time']]: 
+                        dfdic=df[session['user_access_time']][dfsh]
+                        dfdic.reset_index(drop=True, inplace=True)
+                        shp=dfdic.shape
+                        dfdic.index=range(1,shp[0]+1)
+                        dfdic.columns=range(1,shp[1]+1)
+                        df_new[session['user_access_time']][dfsh]=dfdic
+     
         #　↓　変数condDictに、検索条件の辞書を込める
         condDict = get_search_condition()
         #app.logger.info('condDict={}'.format(condDict))
@@ -167,20 +196,31 @@ def upload():
         treatmentHosName_f = request.form.get('treatmentHosName_fixed')
         registerNo_Str_f = request.form.get('registerNo_Str_fixed')
         df_new2_f = request.form.get('df_new2')
+        # ↑　df_new2_fは、一時的にフロントエンド側（index2）に送っておいた
+        # dataframeの内容が、返却されてきたもの。
+        # 2重にjson化されているので、それぞれjsonファイルを読み込み、
+        # 最後に、session['user_access_time']をキーとした辞書にぶち込み
+        # 変数df_newに格納して、後に使う
+        #json.loads()はjson.load()と違うことに注意！
+        # 参考⇒https://note.nkmk.me/python-json-load-dump/
+        # 参考⇒https://www.python.ambitious-engineer.com/archives/617
+        # pd.read_json()
+        # 参考⇒https://note.nkmk.me/python-pandas-to-json/
         if df_new2_f:
             df_new={}
+            df_new[session['user_access_time']]={}
             df_new2=json.loads(df_new2_f)
             for k, v in df_new2.items():
-                df_new[k]=pd.read_json(v)
+                df_new[session['user_access_time']][k]=pd.read_json(v)
         #app.logger.info('df_new after={}'.format(df_new)) 
         wsh_id_4calc = 1 # calculateテーブルに乗せるデータのidをリセット
         wsh_id_4err = 1 # error_msgテーブルに乗せるデータのidをリセット
         ErrD_obj=[]
         loadD_obj=[]
         for cD in condDict:
-            for dfN_Key in df_new:
-                df_value=df_new[dfN_Key]
-                ### ↓　DataFrameがある大きさを越えないと、読み込まないようにしておく（はorマ　の申請用紙以外のDataFrameを読み込まない）
+            for dfN_Key in df_new[session['user_access_time']]:
+                df_value=df_new[session['user_access_time']][dfN_Key]
+                # ↓　DataFrameがある大きさを越えないと、読み込まないようにしておく（はorマ　の申請用紙以外のDataFrameを読み込まない）
                 if df_value.shape[0] >= 122 and df_value.shape[1] >= 71 : 
                     if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
                         get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
@@ -377,14 +417,14 @@ def upload():
                                 wsh_id_4err += 1
                                 
                                 ErrD_obj.append(d_dic)
-                                """ upD_obj = ErrorMsg()
-                                upD_obj.update_dict(d_dic) """
+
                                 break
                         else:
                             d_dic['id'] =wsh_id_4calc
                             # year_month Dialogにて、年・月・施術者名などを確認するため、
-                            # いずれの項目にもFalseがない、一番目のレコードの施術管理者名や
-                            #　登録記号番号、施術署名をparsonal_dataにぶっこんで
+                            # いずれの項目にもFalseがない一番目のレコードで、なおかつ
+                            # year_month Dialogがまだ開かれていない(flg1 =='False')場合、
+                            # 施術管理者名や登録記号番号、施術署名をparsonal_dataにぶっこんで
                             # jsonifyしてreturnで返す
                             if wsh_id_4calc == 1 and flg1 =='False':
                                 parsonal_data['therapistName']=d_dic['therapistName']
@@ -392,24 +432,33 @@ def upload():
                                 parsonal_data['registerNo_Str']=d_dic['registerNo_Str']
                                 parsonal_data['year_Int'] =int(d_dic['year_Str'])
                                 parsonal_data['month_Int'] =int(d_dic['month_Str'])
+                                
+                                # ↓　year_month Dialogに遷移する前に、df_new[session['user_access_time']]
+                                # に格納したdataframeが消えてしまわないように、一時的にフロントエンド側
+                                # （index2）に送って保存しておいてもらう。
+                                # parsonal_data内に辞書として格納されたdf_new2は、jsonify(parsonal_data)
+                                # によって、一回json化されるものの、それだけではエラーが出てしまう。
+                                # なぜなら、dataframe部分は単純にjson化できないから。
+                                # つまり、dataframe部分を先に一度json化して、それをさらにもう一度全体を
+                                # jsonify(parsonal_data)で2重にjson化しなければ、フロントエンド側には送れない。 
+                                
+                                # pd.to_json()の使い方
+                                # 参考⇒https://note.nkmk.me/python-pandas-to-json/
                                 df_new2={}
-                                for k, v in df_new.items():
+                                for k, v in df_new[session['user_access_time']].items():
                                     df_new2[k]=v.to_json()
                                 parsonal_data['df_new2']=df_new2
-                                """ # ↓ ErrorMsgのレコードを念のためすべて消しておく(先に読み込まれていると、あとで上書きが面倒)
-                                ses.query(ErrorMsg).delete()
-                                ses.commit()
-                                ses.close() """
-                                
+                                # year_month Dialogへと遷移する
                                 return jsonify(parsonal_data)
-
+                           # ↓　いずれの項目にもFalseがなく、year_month Dialogが
+                           # すでに開かれている場合(flg1 =='False')場合、loadD_obj
+                           # に加えられていく
                             wsh_id_4calc += 1
                             loadD_obj.append(d_dic)
-                            """ upD_obj = Calculate()
-                            upD_obj.update_dict(d_dic)
-                        ses.add(upD_obj)
-                        ses.commit()
-                        ses.close() """
+
+
+        # ---------ここまでで、 df_new[session['user_access_time']]から
+        #           loadD_objとErrD_objへの書き込みが終わっている状態--------------
         
         parsonal_data['process_msg']='総括票　作成中・・・' 
 
@@ -425,16 +474,6 @@ def upload():
         # ↓　総括表１の送付先（soukatsu1Desti）だけを、重複なくリスト化したものがsoukatsu1Desti_List
         soukatsu1Desti_List = soukatsu1Desti_List_set(sortInsList)
 
-        """ re = ses.query(Calculate).all()
-        loadD_obj = get_by_list(re)
-        ses.query(Calculate).delete()# 復帰
-        ses.commit()# 復帰
-        ses.close()# 復帰
-        re = ses.query(ErrorMsg).all()
-        ErrD_obj = get_by_list(re)
-        ses.query(ErrorMsg).delete() #復帰
-        ses.commit()#復帰
-        ses.close()# 復帰 """
 
         for desti in soukatsu1Desti_List:
             dicDesti_insur= get_soukatsu1Desti_insur_dic(sortInsList,soukatsu1Desti_List) 
