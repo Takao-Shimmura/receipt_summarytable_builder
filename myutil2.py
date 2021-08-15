@@ -232,9 +232,19 @@ def define_soukatsu1Desti(dic1):
                 dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                 dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
             except:
-                dic1['soukatsu1Desti'] = 'NotFound'
-                dic1['kana_Insurer_Name'] = 'NotFound'
-                dic1['kanji_Insurer_Name'] = 'NotFound'
+                #　先頭の67を消去して、再検索してみても市町村の国保と合致しない場合
+                # 山形県のように保険者番号が５桁の場合もあるので、
+                # 下5桁（[3:] ）で検索してみる
+                try:
+                    myinsdata = ses.query(InsurerData).\
+                    filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str'][3:] ).one()
+                    dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
+                    dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
+                    dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
+                except:
+                    dic1['soukatsu1Desti'] = 'NotFound'
+                    dic1['kana_Insurer_Name'] = 'NotFound'
+                    dic1['kanji_Insurer_Name'] = 'NotFound'
         #　↓　後期高齢者者医療　の一番最初の４桁は、と都道府県ごとに決まっている。（下4桁は市町村で異なる）
         # insurardataに登録されている保険番号は上4桁のみ　で、下4桁はアスタリスク「****」にしてある。
         # 上4桁を残して、下4桁を「****」に変えて、再検索してみる
