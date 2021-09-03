@@ -1,0 +1,575 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+Index
+{% endblock %}
+
+
+{% block headline %}
+{{ title }}
+{% endblock %}
+
+
+
+{% block content %}
+
+<h4 class="mb-1 " id="msg">{{message}}</h4>
+<!-- Vue.js container -->
+<div id="app" class="m-3">
+    <mycomp/>
+</div>
+
+
+<!-- mycomp's template -->
+{% raw %}
+
+<script type="text/x-template" id="mycomp-template">
+<!-- ↓以下は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->   
+<!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
+  <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
+<div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
+  <label>{{title_msg}}</label>
+  <hr/>
+  <template v-if="formCloseFlg=='False'">
+    <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
+      <div class="form-group ">
+        <div class="input-group "><!-- input-group-lg   btn-lg-->
+            <!-- <div class="row" > -->
+          <div class="custom-file " >
+            <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+            <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
+            <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
+          </div>
+            <!-- </div> -->
+          <div class="input-group-append active">
+            <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+          </div>
+        </div>
+      </div>
+      <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+        <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
+    </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
+  </template>
+
+  <!-- Error message  -->
+  <template v-if="errOpenFlg=='True'">
+    <template v-if="errData=='False'">
+      <label>※読み込めなかったシートはありませんでした。</label>
+    </template>
+    <template v-else>
+ 
+      <label>👇以下「エラーメッセージ」です</label>
+        　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
+        <ul class="list-group border-left border-right border-bottom list-unstyled">
+          <template v-for="items in errData">
+            <li class="border-top" >
+              {{items[0]}}
+            </li>
+            <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
+                <ul>
+                  <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
+                  <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
+                  <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
+                  によるリスト作成で「tooltip」がうまく作れない。
+                  よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
+                  コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
+                  （Error messegeページが開くタイミング）で実行されるようにした。 -->
+                  <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
+                  <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
+                  反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
+                  　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
+                  【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
+                  【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
+
+                  <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
+                data-toggle="tooltip" data-html="true" 
+                v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202109040700&quot; />'"> 
+                    <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
+                      参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
+                    <template v-if="item[0]==''">
+                      {{''}}
+                      
+                    </template>  
+                    <template v-else>
+                      {{'【'+item[0]+'】'+item[1]}}
+                    </template> 
+                  </li>
+                </ul>  
+            </template>
+          </template>
+        </ul> 
+    </template>
+  </template>
+
+  <!-- Reset button  -->
+  <template v-if="resetButtonFlg=='True'">
+    <div class="form-group">
+      <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+      <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+      ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+      参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+    </div>
+  </template>
+
+  <!-- year_month Dialog -->
+  <div class="modal fade" id="year_month">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="card">
+          <div class="card-header">
+                    <h4 class="card-title">
+                        以下を確認して「申請書作成」ボタンを押してください
+                    </h4>
+                    <small class="form-text text-muted ">
+                          ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
+                    </small>
+          </div>
+          <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+          <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+          <div class="card-body">
+            <div class="form-group form-inline">
+                        <label class="col-2" for="year">令和</label>
+                        <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
+                        <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
+            </div>           
+          
+            <div class="form-group row">
+                        <label class="col-5" for="therapist">施術者名</label>
+                        <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
+            </div>
+            <div class="form-group row">
+                        <label class="col-5" for="treatmentHos">施術所名</label>
+                        <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
+            </div>
+            <div class="form-group row">
+                        <label class="col-5" for="registerNo">登録記号・番号</label>
+                        <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
+            </div>
+            <div class="form-group">
+              <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
+              <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+              <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+              ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+              参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+   <!-- kentan Dialog -->
+  <div class="modal fade" id="kentanDialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="card">
+          <div class="card-header">
+                    <h4 class="card-title">
+                        以下の『県単医療助成費申請書』の項目を選択して「申請書作成」ボタンを押してください
+                    </h4>
+          </div>
+          <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+          <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+          <div class="card-body">
+            <template v-for="items in kentanData" >
+              <div class="border-bottom">
+              シート名【 {{items['sheetName']}}】
+                <br>
+                  <div class="form-group form-check form-check-inline">
+                              <label class="col-5">施術の種類</label>
+                              <input type="radio"  class="form-check-input" id="acup_moxi" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="はりきゅう"><label for="acup_moxi" class="col-4">はりきゅう</label>
+                              <input type="radio"  class="form-check-input" id="massage" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="マッサージ"><label for="massage" class="col-4">マッサージ</label>
+                  </div>
+                <br>
+                  <template v-if="items['kankatsu_kentan'] =='新潟県'" >
+                    <div class="form-group form-check form-check-inline">
+                      <label for="kenrou" class="col-4" >申請区分</label>
+                      <input type="radio"  class="form-check-input" id="kenrou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県老"><label for="kenrou" class="col-2" >県老</label>
+                      <input type="radio"  class="form-check-input" id="kensyou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県障"><label for="kensyou" class="col-2">県障</label>
+                      <input type="radio"  class="form-check-input" id="kenoya" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県親"><label for="kenoya" class="col-2">県親</label>
+                      <input type="radio"  class="form-check-input" id="tanshi" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="単子"><label for="tanshi" class="col-2">単子</label>
+                    </div>
+                  </template>
+                </div>
+              <br>
+            </template>
+          
+            <div class="form-group">
+              <template v-if="!kentanRadioBflg">
+                <!-- kentanRadioBflg = false・・・つまり、はりきゅう/マッサージ　を選択していない
+                ものが一つでもある場合 -->
+                <!-- 非活性になっている送信ボタンにツールチップを浮かび上がらせるには、
+                ↓　の<div class="d-inline-block" ・・・</div>でボタンを囲まないといけない
+                参考⇒https://getbootstrap.jp/docs/4.4/components/tooltips/
+                の「Disabled elements」項目 -->
+                <div class="d-inline-block" tabindex="0" data-toggle="tooltip" 
+                title="はりきゅう/マッサージ を「すべて」選択しないとボタンを押せません" >
+                  <button type="submit"  class="btn btn-primary" style="pointer-events: none;" disabled>申請書作成</button>
+                </div>
+              </template>
+              <template v-else>
+                <!-- kentanRadioBflg = true・・・つまり、はりきゅう/マッサージ　が
+                すべて選択されてある場合 -->
+                <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
+              </template>
+                <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+            </div>
+              
+
+            <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+            ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+            参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
+<!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->    
+</script>
+{% endraw %}
+
+<!-- ******************** -->
+<!-- * Vue.js Component Script * -->
+<!-- ******************** -->
+<script>
+  //database view
+
+Vue.component('mycomp', {
+    template: '#mycomp-template',
+    data:function(){
+
+        return{  
+                uploadFile: null,  //←この一行のuploadFileという変数は
+                //ajax通信するときに用意しておかなければならない⇒を参照　http://tech.aainc.co.jp/archives/10714
+                dialog_flg: 'False', //←このdialog_flgに入れておく値は、Boolean値ではなく、文字列としておく。
+                //　そうでないと、バックエンドのpython側に渡したときにうまく認識してくれない
+                year_vm:'',
+                month_vm:'', 
+                therapistName_vm:'', 
+                treatmentHosName_vm:'', 
+                registerNo_Str_vm:'', 
+                title_msg:'👇申請書のエクセルファイルを選択',
+                formCloseFlg: 'False',  //←このformCloseFlgという変数は
+                //ajax通信するときに入力フォームを閉じておくために必要。
+                downloadFileName:'',//←この一行のdownloadFileNameという変数は
+                //ajax通信するときに用意しておかなければならない⇒を参照　http://tech.aainc.co.jp/archives/10714
+                errOpenFlg: 'False',//Error Messageページを開くためのフラグ
+                errData:null,//Error Messageで表示するためのデータ。リストinリストになっている。
+                df_new2_dict:{},//pandasで読み込んだdataframeを、バックエンドであるpython側で
+                //保持しておけないので、フロントエンドであるこちら側（index2）で一時的にあずかる。
+                resetButtonFlg:'False',//リセットボタン。トップページに戻る。
+                uploadedData:[],//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
+                uploadedErrData:[],//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                kentanData:[],//県単のデータ（配列　「県老/県障/県親/単子_はき/マ」未分類　kentanダイアログを表示するために一時預かり）
+                kentanErrData:[],//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                kentanOpenFlg: 'False',//県障ダイアログを開くためのフラグ
+                kentanDialogFlg: 'False',//県障ダイアログが開いたかどうかをpython側に伝えるためのフラグ
+              }
+    },
+    methods:{
+      selectedFile: function(e) {// この関数は⇒を参照　http://tech.aainc.co.jp/archives/10714
+                // 選択された File の情報を保存しておく(input)
+                e.preventDefault();
+                let files = e.target.files;
+                this.uploadFile = files[0];
+            },
+            //submit file 1st 
+      read_file:function(e){
+        let formData= new FormData();
+        formData.append('file', this.uploadFile);// このthis.uploadFileは⇒を参照　http://tech.aainc.co.jp/archives/10714
+        formData.append('dialogFlg', this.dialog_flg);
+        this.formCloseFlg='True';
+        this.title_msg = 'アップロード中・・・そのままお待ちください。';
+        let self=this;
+        $.ajax({
+            type:'POST',
+            url:'/upload',
+            data:formData,
+            processData:false,
+            contentType:false,
+        success:function(data){
+          if (data['failed_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
+                        self.title_msg = data['failed_msg'] ; 
+                        resetButtonFlg = 'True';
+                    }else if(data['process_msg'] ){ //←このelse if節は、python側で読み込んだxlsxファイルのシートがすべて読み込めなかったときのもの
+                        self.title_msg = data['process_msg'];
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
+
+                    }else if(data['df_new2'] ){//←このelse if節は、
+                      //'process_msg'も'failed_msg'もajax通信で返ってこなかったとき。
+                      //なおかつ'df_new2'にてdataframeが返されたときに反応するようにしておいてある
+                      //つまり、python側で読み込んだ申請書が１シート以上読み
+                      //込めてはじめて、year_month_dialogに遷移するためのもの
+                      self.year_vm = data['year_Int'] ;
+                      self.month_vm = data['month_Int'] ;
+                      self.therapistName_vm= data['therapistName'] ;
+                      self.treatmentHosName_vm= data['treatmentHosName'] ;
+                      self.registerNo_Str_vm= data['registerNo_Str']; 
+                      self.df_new2_dict= data['df_new2']; 
+                      $('#year_month').modal('show');
+                      
+                    }else if(data['kentanData'] ){//←このelse if節は、
+                      //'process_msg'も'failed_msg'もajax通信で返ってこなかったとき。
+                      //なおかつ、申請書がすべてエラーで、県障だけがOKのときに、
+                      //謝ってyear_month　dialogが表示されないように、
+                      //いちはやくkentanDialogを表示するためのもの
+                        self.uploadedData = data['uploadedData'];//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
+                        self.uploadedErrData = data['uploadedErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                        self.kentanData = data['kentanData'];//県単のデータ（配列　「県老/県障/県親/単子_はき/マ」未分類　kentanダイアログを表示するために一時預かり）
+                        console.log(data['kentanData']);
+                        self.kentanErrData = data['kentanErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                        $('#kentanDialog').modal('show');//県単ダイアログを開くためのメソッド
+                          
+                    }else {
+                      self.title_msg='送信失敗?';
+                      self.resetButtonFlg='True'; 
+                    }
+
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='送信失敗';
+          self.resetButtonFlg='True';
+        }
+        });
+      },
+      read_file2nd:function(e){
+        $('#year_month').modal('hide')
+        this.dialog_flg='True'
+        let formData= new FormData();
+        formData.append('dialogFlg', this.dialog_flg);
+        formData.append('year_fixed', this.year_vm);
+        formData.append('month_fixed', this.month_vm);
+        formData.append('therapistName_fixed', this.therapistName_vm);
+        formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
+        formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
+        formData.append('df_new2', JSON.stringify(this.df_new2_dict));
+        //↑バックエンド側（python）から一時的に預かったdataframeを
+        //再び戻すために、再度json化してformdataに格納する
+        let self=this;
+        $.ajax({
+            type:'POST',
+            url:'/upload',
+            data:formData,
+            processData:false,
+            contentType:false,
+        success:function(data){
+          if (data['process_msg'] ) {
+                        self.title_msg = data['process_msg'] ;
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
+          }else if(data['kentanData'] ){
+                        self.uploadedData = data['uploadedData'];//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
+                        self.uploadedErrData = data['uploadedErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                        self.kentanData = data['kentanData'];//県単のデータ（配列　「県老/県障/県親/単子_はき/マ」未分類　kentanダイアログを表示するために一時預かり）
+                        //console.log(data['kentanData']);
+                        self.kentanErrData = data['kentanErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
+                        $('#kentanDialog').modal('show');//県単ダイアログを開くためのメソッド
+                    }
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='作成　失敗';
+          self.resetButtonFlg = 'True';
+        }
+        });
+      },
+      read_fileKentan:function(e){
+        $('#kentanDialog').modal('hide')
+        this.dialog_flg='True'
+        this.kentanDialogFlg='True'
+        let formData= new FormData();
+        formData.append('dialogFlg', this.dialog_flg);
+        formData.append('kentanDialogFlg', this.kentanDialogFlg);
+        formData.append('uploadedData', JSON.stringify(this.uploadedData));
+        formData.append('uploadedErrData', JSON.stringify(this.uploadedErrData));
+        formData.append('kentanData', JSON.stringify(this.kentanData));
+        formData.append('kentanErrData', JSON.stringify(this.kentanErrData));
+        formData.append('year_fixed', this.year_vm);
+        formData.append('month_fixed', this.month_vm);
+        formData.append('therapistName_fixed', this.therapistName_vm);
+        formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
+        formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
+        //↑バックエンド側（python）から一時的に預かったuploadedData~kentanErrDataを
+        //再び戻すために、再度json化してformdataに格納する
+        //year_vm~month_vmを再び返すのは、バックエンド側でダウンロードするファイル名が
+        //'すべてのシートが読み込み不可.xlsx'とさせないため。
+        //therapistName_vm~registerNo_Str_vmを再び返すのは、バックエンド側で
+        //therapistName~registerNoが空欄にならないように。
+        
+        let self=this;
+        $.ajax({
+            type:'POST',
+            url:'/upload',
+            data:formData,
+            processData:false,
+            contentType:false,
+        success:function(data){
+          if (data['process_msg'] ) {
+                        self.title_msg = data['process_msg'] ;
+                        self.downloadFileName=data['dLFile'] ;
+                        self.errData=data['alert_data'];
+                        
+                        self.load_file();
+                        //fileをアップロードして読み込んで、総括票の作成が成功したら、
+                        //ダウンロードに移る。そのためにload_file()を呼び出す。
+                        //$.ajaxのなかにaxiosがネストされた状態
+                    }
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='作成　失敗';
+          self.resetButtonFlg = 'True';
+        }
+        });
+      },
+      load_file:function(e){
+        let self=this;
+        let formData= new FormData();
+        formData.append('filename', self.downloadFileName);
+        
+        axios({//ファイルのダウンロードには、なぜか$.ajaxは向かない。
+        method: "POST",
+        url: "/download",
+        data:formData,
+        dataType: 'binary',
+        responseType:'blob',//'binary'と'blob'に設定しないと、ファイルの受け渡しができない
+        //参照⇒https://teratail.com/questions/215360
+      })
+        .then(function(response) {//参照⇒https://tkkm.tokyo/post-177/
+          if (window.navigator.msSaveOrOpenBlob) {
+            // for IE,Edge⇒・・・のはずが、IEでは、ひらくことはできてもダウンロードは不可
+            window.navigator.msSaveOrOpenBlob(response.data, self.downloadFileName);
+          } else {
+          let xlsx_file = response.data;
+          let blob = new Blob([xlsx_file], {
+            type:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          });
+          let link = document.createElement("a");
+          link.href = window.URL.createObjectURL(blob);
+          link.setAttribute('download',self.downloadFileName); 
+          /* link.click(); */
+
+          //↓↓　最後のlink.click()が終わってから、del_file()に行くために
+          //Promiseにて順番に処理　↓参考
+          //https://www.youtube.com/watch?v=kbKIENQKuxQ
+          //https://sbfl.net/blog/2016/07/13/simplifying-async-code-with-promise-and-async-await/
+          new Promise (resolve =>{
+                          link.click();
+                          resolve();
+                        }).then(()=>(self.del_file(),
+                        self.errOpenFlg='True',
+                        Vue.nextTick(() => {
+        //errOpenFlg='True'となったタイミングで・・・つまりError messageページを
+        //表示するタイミングで、HTMLが作成完了するのを待って、tooltipの作成に入る
+        //そうしないと、for文を用いて作るリストの「tooltip」がうまく作成できない。
+        //参照⇒https://blog.capilano-fw.com/?p=4773
+                  $('[data-toggle="tooltip"]').tooltip({
+                  
+                        });
+              })));
+          }
+        })
+        .catch(function () {
+          self.title_msg='ダウンロード失敗';
+          self.resetButtonFlg = 'True';
+        });
+      },
+      del_file:function(e){
+        
+        let self=this;
+        $.ajax({
+            type:'GET',
+            url:'/dLfileDel',
+            /* processData:false,
+            contentType:false, */
+        success:function(data){
+              self.title_msg = data; 
+              self.resetButtonFlg = 'True';
+         },
+        error:function(request,status,err){
+        
+          self.title_msg='消去　失敗';
+          self.resetButtonFlg = 'True';
+            
+        }
+        });
+      },  
+    },
+    computed:{
+        kentanRadioBflg:function(){
+          let flg = true;
+          //for...in文　オブジェクト（辞書inリスト）を取り出す場合
+          //参考　https://qiita.com/endam/items/808a084859e3a101ab8f　
+          for(let items of this.kentanData){
+            console.log(items['title_AcupOrMass']);
+            if(items['title_AcupOrMass']=="None"){
+              flg=false;
+              //console.log(flg);
+              Vue.nextTick(() => {
+                $('[data-toggle="tooltip"]').tooltip({
+                })
+                });
+              return flg;
+            }
+          }
+          /* Vue.nextTick(() => {
+                $('[data-toggle="tooltip"]').tooltip({
+                })
+                }); */
+          console.log(flg);
+          return flg
+        }
+
+      },
+        /* ↓　動的に「tooltip」を作成するためのVue.js内のメソッドである「watch」。
+        errData変数が変更されるたびに、中の関数などが動いてくれる仕掛け
+    参照⇒https://blog.capilano-fw.com/?p=4773
+    しかし、上記HPのサンプルにあった「watch」「mounted」「title()」は、
+    省略しても動いてくれた */
+/*     watch: {
+              errData() {
+
+                    Vue.nextTick(() => {
+
+                        $('[data-toggle="tooltip"]').tooltip();
+                        
+                    })
+
+                }
+            },
+            mounted() {
+              Vue.nextTick(() => {
+                  $('[data-toggle="tooltip"]').tooltip();
+              })
+            } */
+});
+//start Vue.
+new Vue({
+    el:'#app',
+});
+</script>
+
+{% endblock %}
+
+
+
+
+{% block footer %}
+<!-- copyright 2021 <img src ="/static/logo.jpg?202109060605"/> -->
+Copyright 2021 <img src ="/static/logo.jpg?202108061354"/>
+
+{% endblock %}

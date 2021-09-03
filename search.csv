@@ -1,4 +1,6 @@
-id,condition_Title,title_AcupOrMass,acupOrMass_Condition,acupOrMass_Cell,insurerNoLast_Cell,insuraCodeNo_Cell,insurerNo_CellStep,name_Cell,nameKana_Cell,amount_Cell,copayment_Cell,billingAmount_Cell,relationship_Cell,therapistName_Cell,treatmentHosName_Cell,registerNo_Cell,yearTop_Cell,year1st_Cell,yearLast_Cell,monthTop_Cell,month1st_Cell,monthLast_Cell
+﻿id,condition_Title,title_AcupOrMass,acupOrMass_Condition,acupOrMass_Cell,insurerNoLast_Cell,insuraCodeNo_Cell,insurerNo_CellStep,name_Cell,nameKana_Cell,amount_Cell,copayment_Cell,billingAmount_Cell,relationship_Cell,therapistName_Cell,treatmentHosName_Cell,registerNo_Cell,yearTop_Cell,year1st_Cell,yearLast_Cell,monthTop_Cell,month1st_Cell,monthLast_Cell
 1,2020年12月～書式はりきゅう,はりきゅう,（はり・きゅう用）,2_47,12_71,16_5,-2,19_13,18_18,48_48,50_48,52_48,19_36,64_43,62_43,63_6,2_34,26_24,26_40,2_39,26_28,26_44
 2,2020年12月～書式マ2列挿入後Ver,マッサージ,（あんま・マッサージ用）,2_38,18_77,23_6,-3,26_17,25_22,73_52,75_52,77_52,26_39,89_46,87_46,88_7,2_25,33_27,33_44,2_30,33_31,33_48
 3,2020年12月～書式マッサージ　ノーマルVer,マッサージ,（あんま・マッサージ用）,2_36,18_75,23_4,-3,26_15,25_20,73_50,75_50,77_50,26_37,89_44,87_44,88_5,2_23,33_25,33_42,2_28,33_29,33_46
+4,2019 4月~書式　県単医療費助成申請書　新潟市外,,県単医療費助成申請書,7_4,pass,pass,0,39_16,pass,76_55,pass,pass,pass,pass,pass,pass,11_50,22_39,60_46,11_56,22_48,60_55
+5,2019 4月~書式　県単医療費助成申請書　新潟市,,重度心身障がい者医療費助成申請書,2_1,pass,pass,0,20_14,pass,55_47,pass,pass,pass,pass,pass,pass,5_55,23_54,48_3,5_60,23_62,48_8

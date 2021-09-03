@@ -177,11 +177,14 @@ CREATE TABLE "insurerdata" (
     PRIMARY KEY("id")
 );
 
+ログイン
+ コマンドプロンプト内でheroku login 
 
- コマンドプロンプト内でheroku login して、heroku pg:psql --app receipt-summarytable-builder
- でデータベースにアクセスし、以下のコマンドを入力
+ データベースにアクセス
+heroku pg:psql --app receipt-summarytable-builder
 
 
+テーブルにCSVデータをインポートするコマンド
 \copy insurerdata from 'C:\Py\FlaskSampleP68\flask_Ahaki_Receipt_SummaryTable_builder_app/insurerdata.csv' with csv encoding 'utf8' Header
 \copy search from 'C:\Py\FlaskSampleP68\flask_Ahaki_Receipt_SummaryTable_builder_app/search.csv' with csv encoding 'utf8' Header
 
