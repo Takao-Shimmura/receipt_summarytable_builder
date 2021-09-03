@@ -67,10 +67,10 @@ app.secret_key = b'random string...'
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
-###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
+engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
 
 #　↓　ローカルのSQLite接続用パス 
-engine = create_engine('sqlite:///sample.sqlite3')
+###engine = create_engine('sqlite:///sample.sqlite3')
 
 # access top page.
 @app.route('/',methods=['GET'])
@@ -721,6 +721,6 @@ if __name__=='__main__':
     app.debug = True
 
     # ↓　サーバーにデプロイして公開するためのもの
-    ###app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    app.run(host='localhost')
+    ###app.run(host='localhost')
