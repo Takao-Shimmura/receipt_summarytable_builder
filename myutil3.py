@@ -442,7 +442,7 @@ def error_Msg_Sheet(err_obj,errKentan_obj,wb2):
                 list4=[]
                 list4.append('★読み込みができなかったシート：　【'+l7['sheetName']+'】')
                 if l7['name']=='False'or l7['name']== '0':
-                    list4.append([15,'【県単】「申請者氏名」の記入漏れ'])
+                    list4.append([15,'【県単】「受給者氏名」の記入漏れ'])
                 if l7['amount_Str']=='False' :
                     list4.append([16,'【県単】「合計」金額の記入漏れ'])
                 if l7['year_Str']== 'False':
