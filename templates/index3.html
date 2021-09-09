@@ -14,7 +14,7 @@ Index
 
 {% block content %}
 
-<h4 class="mb-1 " id="msg">{{message}}</h4>
+<h4 class="mb-1" id="msg">{{message}}</h4>
 <!-- Vue.js container -->
 <div id="app" class="m-3">
     <mycomp/>
@@ -26,205 +26,307 @@ Index
 
 <script type="text/x-template" id="mycomp-template">
 <!-- ↓以下は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->   
-<!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
-  <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
+    <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
+    <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <label>{{title_msg}}</label>
-  <hr/>
-  <template v-if="formCloseFlg=='False'">
-    <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
-      <div class="form-group ">
-        <div class="input-group "><!-- input-group-lg   btn-lg-->
-            <!-- <div class="row" > -->
-          <div class="custom-file " >
-            <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
-            <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
-            <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
+  <p class="h6 text-right" >最終更新日　2021 09 09</p>
+    <!-- 切り替えタブ部分 -->
+  <ul class="nav nav-tabs" role="tablist">
+    <!-- １つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link active" href="#top"
+            data-toggle="tab" role="tab">トップ</a>
+    </li>
+    <!-- ２つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link" href="#second"
+            data-toggle="tab" role="tab">使い方</a>
+    </li>
+    <!-- ３つ目のタブ -->
+    <li class="nav-item">
+        <a class="nav-link"  href="#third"
+            data-toggle="tab" role="tab">更新履歴</a>
+    </li>
+    <!-- ４つ目のタブ -->
+    <li class="nav-item">
+      <a class="nav-link"  href="#fourth"
+          data-toggle="tab" role="tab">登録済み保険番号</a>
+    </li>
+    <!-- ５つ目のタブ -->
+    <li class="nav-item">
+      <a class="nav-link"  href="#fifth"
+          data-toggle="tab" role="tab">お問い合わせ</a>
+    </li>
+  </ul>
+
+<div class="tab-content"><!-- タブコンテンツの開始 -->
+    <!-- １つ目のコンテンツ -->
+  <div class="tab-pane fade show active" id="top" role="tabpanel">
+    
+      <label>{{title_msg}}</label>
+      <hr/>
+      <template v-if="formCloseFlg=='False'">
+        <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
+          <div class="form-group ">
+            <div class="input-group "><!-- input-group-lg   btn-lg-->
+                <!-- <div class="row" > -->
+              <div class="custom-file " >
+                <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+                <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
+                <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
+              </div>
+                <!-- </div> -->
+              <div class="input-group-append active">
+                <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+              </div>
+            </div>
           </div>
-            <!-- </div> -->
-          <div class="input-group-append active">
-            <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+          <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+            <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
+        </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
+      </template>
+
+      <!-- Error message  -->
+      <template v-if="errOpenFlg=='True'">
+        <template v-if="errData=='False'">
+          <label>※読み込めなかったシートはありませんでした。</label>
+        </template>
+        <template v-else>
+    
+          <label>👇以下「エラーメッセージ」です</label>
+            　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
+            <ul class="list-group border-left border-right border-bottom list-unstyled">
+              <template v-for="items in errData">
+                <li class="border-top" >
+                  {{items[0]}}
+                </li>
+                <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
+                    <ul>
+                      <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
+                      <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
+                      <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
+                      によるリスト作成で「tooltip」がうまく作れない。
+                      よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
+                      コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
+                      （Error messegeページが開くタイミング）で実行されるようにした。 -->
+                      <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
+                      <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
+                      反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
+                      　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
+                      【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
+                      【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
+
+                      <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
+                    data-toggle="tooltip" data-html="true" 
+                    v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202109040700&quot; />'"> 
+                        <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
+                          参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
+                        <template v-if="item[0]==''">
+                          {{''}}
+                          
+                        </template>  
+                        <template v-else>
+                          {{'【'+item[0]+'】'+item[1]}}
+                        </template> 
+                      </li>
+                    </ul>  
+                </template>
+              </template>
+            </ul> 
+        </template>
+      </template>
+
+      <!-- Reset button  -->
+      <template v-if="resetButtonFlg=='True'">
+        <div class="form-group">
+          <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+          <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+          ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+          参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+        </div>
+      </template>
+
+      <!-- year_month Dialog -->
+      <div class="modal fade" id="year_month">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="card">
+              <div class="card-header">
+                        <h4 class="card-title">
+                            以下を確認して「申請書作成」ボタンを押してください
+                        </h4>
+                        <small class="form-text text-muted ">
+                              ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
+                        </small>
+              </div>
+              <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+              <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+              <div class="card-body">
+                <div class="form-group form-inline">
+                            <label class="col-2" for="year">令和</label>
+                            <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
+                            <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
+                </div>           
+              
+                <div class="form-group row">
+                            <label class="col-5" for="therapist">施術者名</label>
+                            <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
+                </div>
+                <div class="form-group row">
+                            <label class="col-5" for="treatmentHos">施術所名</label>
+                            <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
+                </div>
+                <div class="form-group row">
+                            <label class="col-5" for="registerNo">登録記号・番号</label>
+                            <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
+                </div>
+                <div class="form-group">
+                  <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
+                  <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+                  <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+                  ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+                  参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
-        <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
-    </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
-  </template>
-
-  <!-- Error message  -->
-  <template v-if="errOpenFlg=='True'">
-    <template v-if="errData=='False'">
-      <label>※読み込めなかったシートはありませんでした。</label>
-    </template>
-    <template v-else>
- 
-      <label>👇以下「エラーメッセージ」です</label>
-        　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
-        <ul class="list-group border-left border-right border-bottom list-unstyled">
-          <template v-for="items in errData">
-            <li class="border-top" >
-              {{items[0]}}
-            </li>
-            <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
-                <ul>
-                  <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
-                  <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
-                  <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
-                  によるリスト作成で「tooltip」がうまく作れない。
-                  よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
-                  コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
-                  （Error messegeページが開くタイミング）で実行されるようにした。 -->
-                  <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
-                  <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
-                  反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
-                  　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
-                  【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
-                  【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
-
-                  <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                data-toggle="tooltip" data-html="true" 
-                v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202109040700&quot; />'"> 
-                    <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
-                      参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
-                    <template v-if="item[0]==''">
-                      {{''}}
-                      
-                    </template>  
-                    <template v-else>
-                      {{'【'+item[0]+'】'+item[1]}}
-                    </template> 
-                  </li>
-                </ul>  
-            </template>
-          </template>
-        </ul> 
-    </template>
-  </template>
-
-  <!-- Reset button  -->
-  <template v-if="resetButtonFlg=='True'">
-    <div class="form-group">
-      <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
-      <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
-      ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
-      参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
-    </div>
-  </template>
-
-  <!-- year_month Dialog -->
-  <div class="modal fade" id="year_month">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="card">
-          <div class="card-header">
-                    <h4 class="card-title">
-                        以下を確認して「申請書作成」ボタンを押してください
-                    </h4>
-                    <small class="form-text text-muted ">
-                          ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
-                    </small>
-          </div>
-          <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
-          <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
-          <div class="card-body">
-            <div class="form-group form-inline">
-                        <label class="col-2" for="year">令和</label>
-                        <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
-                        <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
-            </div>           
-          
-            <div class="form-group row">
-                        <label class="col-5" for="therapist">施術者名</label>
-                        <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
-            </div>
-            <div class="form-group row">
-                        <label class="col-5" for="treatmentHos">施術所名</label>
-                        <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
-            </div>
-            <div class="form-group row">
-                        <label class="col-5" for="registerNo">登録記号・番号</label>
-                        <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
-            </div>
-            <div class="form-group">
-              <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
-              <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
-              <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
-              ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
-              参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-   <!-- kentan Dialog -->
-  <div class="modal fade" id="kentanDialog">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="card">
-          <div class="card-header">
-                    <h4 class="card-title">
-                        以下の『県単医療助成費申請書』の項目を選択して「申請書作成」ボタンを押してください
-                    </h4>
-          </div>
-          <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
-          <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
-          <div class="card-body">
-            <template v-for="items in kentanData" >
-              <div class="border-bottom">
-              シート名【 {{items['sheetName']}}】
-                <br>
-                  <div class="form-group form-check form-check-inline">
-                              <label class="col-5">施術の種類</label>
-                              <input type="radio"  class="form-check-input" id="acup_moxi" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="はりきゅう"><label for="acup_moxi" class="col-4">はりきゅう</label>
-                              <input type="radio"  class="form-check-input" id="massage" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="マッサージ"><label for="massage" class="col-4">マッサージ</label>
-                  </div>
-                <br>
-                  <template v-if="items['kankatsu_kentan'] =='新潟県'" >
-                    <div class="form-group form-check form-check-inline">
-                      <label for="kenrou" class="col-4" >申請区分</label>
-                      <input type="radio"  class="form-check-input" id="kenrou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県老"><label for="kenrou" class="col-2" >県老</label>
-                      <input type="radio"  class="form-check-input" id="kensyou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県障"><label for="kensyou" class="col-2">県障</label>
-                      <input type="radio"  class="form-check-input" id="kenoya" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県親"><label for="kenoya" class="col-2">県親</label>
-                      <input type="radio"  class="form-check-input" id="tanshi" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="単子"><label for="tanshi" class="col-2">単子</label>
+      <!-- kentan Dialog -->
+      <div class="modal fade" id="kentanDialog">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="card">
+              <div class="card-header">
+                        <h4 class="card-title">
+                            以下の『県単医療助成費申請書』の項目を選択して「申請書作成」ボタンを押してください
+                        </h4>
+              </div>
+              <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+              <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+              <div class="card-body">
+                <template v-for="items in kentanData" >
+                  <div class="border-bottom">
+                  シート名【 {{items['sheetName']}}】
+                    <br>
+                      <div class="form-group form-check form-check-inline">
+                                  <label class="col-5">施術の種類</label>
+                                  <input type="radio"  class="form-check-input" id="acup_moxi" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="はりきゅう"><label for="acup_moxi" class="col-4">はりきゅう</label>
+                                  <input type="radio"  class="form-check-input" id="massage" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="マッサージ"><label for="massage" class="col-4">マッサージ</label>
+                      </div>
+                    <br>
+                      <template v-if="items['kankatsu_kentan'] =='新潟県'" >
+                        <div class="form-group form-check form-check-inline">
+                          <label for="kenrou" class="col-4" >申請区分</label>
+                          <input type="radio"  class="form-check-input" id="kenrou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県老"><label for="kenrou" class="col-2" >県老</label>
+                          <input type="radio"  class="form-check-input" id="kensyou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県障"><label for="kensyou" class="col-2">県障</label>
+                          <input type="radio"  class="form-check-input" id="kenoya" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県親"><label for="kenoya" class="col-2">県親</label>
+                          <input type="radio"  class="form-check-input" id="tanshi" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="単子"><label for="tanshi" class="col-2">単子</label>
+                        </div>
+                      </template>
+                    </div>
+                  <br>
+                </template>
+              
+                <div class="form-group">
+                  <template v-if="!kentanRadioBflg">
+                    <!-- kentanRadioBflg = false・・・つまり、はりきゅう/マッサージ　を選択していない
+                    ものが一つでもある場合 -->
+                    <!-- 非活性になっている送信ボタンにツールチップを浮かび上がらせるには、
+                    ↓　の<div class="d-inline-block" ・・・</div>でボタンを囲まないといけない
+                    参考⇒https://getbootstrap.jp/docs/4.4/components/tooltips/
+                    の「Disabled elements」項目 -->
+                    <div class="d-inline-block" tabindex="0" data-toggle="tooltip" 
+                    title="はりきゅう/マッサージ を「すべて」選択しないとボタンを押せません" >
+                      <button type="submit"  class="btn btn-primary" style="pointer-events: none;" disabled>申請書作成</button>
                     </div>
                   </template>
+                  <template v-else>
+                    <!-- kentanRadioBflg = true・・・つまり、はりきゅう/マッサージ　が
+                    すべて選択されてある場合 -->
+                    <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
+                  </template>
+                    <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
                 </div>
-              <br>
-            </template>
-          
-            <div class="form-group">
-              <template v-if="!kentanRadioBflg">
-                <!-- kentanRadioBflg = false・・・つまり、はりきゅう/マッサージ　を選択していない
-                ものが一つでもある場合 -->
-                <!-- 非活性になっている送信ボタンにツールチップを浮かび上がらせるには、
-                ↓　の<div class="d-inline-block" ・・・</div>でボタンを囲まないといけない
-                参考⇒https://getbootstrap.jp/docs/4.4/components/tooltips/
-                の「Disabled elements」項目 -->
-                <div class="d-inline-block" tabindex="0" data-toggle="tooltip" 
-                title="はりきゅう/マッサージ を「すべて」選択しないとボタンを押せません" >
-                  <button type="submit"  class="btn btn-primary" style="pointer-events: none;" disabled>申請書作成</button>
-                </div>
-              </template>
-              <template v-else>
-                <!-- kentanRadioBflg = true・・・つまり、はりきゅう/マッサージ　が
-                すべて選択されてある場合 -->
-                <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
-              </template>
-                <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
-            </div>
-              
+                  
 
-            <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
-            ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
-            参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+                <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+                ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+                参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+  </div><!-- １つ目のコンテンツ 終了-->
+  <!-- ２つ目のコンテンツ -->
+  <div class="tab-pane fade" id="second" role="tabpanel">
+    １）シンプルな使い方<br><br>
+    
+    <div class="alert alert-primary">
+      <div class="embed-responsive embed-responsive-16by9">
+        <!-- ↓youtube 貼り付け　参考⇒https://qumeru.com/magazine/434-->
+    <!-- youtube 自動再生　autoplay=1 参考⇒https://richka.co/times/19703/
+    ただし、上記だけではダメ　mute=1 参考⇒https://web.runland.co.jp/blog_cate2/post-1740
+    youtube ループ再生　loop=1 だけではダメで、playlist=YouTubeIDも設定　参考⇒https://www.manicyouth.jp/youtube-embed-cannnot-loop/ -->
+        <!-- <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/15-JaD33oLo?autoplay=1&mute=1&loop=1&playlist=15-JaD33oLo"></iframe> -->
+        <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/15-JaD33oLo?autoplay=1&mute=1"></iframe>
+      </div>
     </div>
-  </div>
-</div>
+  </div><!-- ２つ目のコンテンツ 終了-->
+  <!-- ３つ目のコンテンツ -->
+  <div class="tab-pane fade" id="third" role="tabpanel">
+    ※お問い合わせのページ<br><br>
+    <div class="alert alert-primary">
+        工事中
+    </div>
+  </div><!-- ３つ目のコンテンツ 終了-->
+    <!-- ４つ目のコンテンツ -->
+  <div class="tab-pane fade" id="fourth" role="tabpanel">
+    ※登録済み　保険番号　一覧<br><br>
+    <nav id="navbar-example3" class="navbar navbar-light bg-light">
+      <a class="navbar-brand" href="#">保険者一覧</a>
+      <nav class="nav nav-pills flex-column">
+        <a class="nav-link" href="#item-1">協会けんぽ</a>
+        <nav class="nav nav-pills flex-column">
+          <a class="nav-link ml-3 my-1" href="#item-1-1">Item 1-1</a>
+          <a class="nav-link ml-3 my-1" href="#item-1-2">Item 1-2</a>
+        </nav>
+        <a class="nav-link" href="#item-2">Item 2</a>
+        <a class="nav-link" href="#item-3">Item 3</a>
+        <nav class="nav nav-pills flex-column">
+          <a class="nav-link ml-3 my-1" href="#item-3-1">Item 3-1</a>
+          <a class="nav-link ml-3 my-1" href="#item-3-2">Item 3-2</a>
+        </nav>
+      </nav>
+    </nav>
+    
+    <div data-spy="scroll" data-target="#navbar-example3" data-offset="0">
+      <h4 id="item-1">冒頭に【0】を付加</h4>
+      <p>？？？？？</p>
+      <h5 id="item-1-1">Item 1-1</h5>
+      <p>...</p>
+      <h5 id="item-1-2">Item 1-2</h5>
+      <p>...</p>
+      <h4 id="item-2">孝雄</h4>
+      <p>...</p>
+      <h4 id="item-3">退職者医療は冒頭に【67】を付加</h4>
+      <p>...</p>
+      <h5 id="item-3-1">新潟県</h5>
+      <p>...</p>
+      <h5 id="item-3-2">山形県</h5>
+      <p>...</p>
+    </div>
+  </div><!-- ４つ目のコンテンツ 終了-->
+    <!-- ５つ目のコンテンツ -->
+  <div class="tab-pane fade" id="fifth" role="tabpanel">
+    ※更新履歴<br><br>
+    <div class="alert alert-primary">
+        工事中
+    </div>
+  </div><!-- ５つ目のコンテンツ 終了-->
+</div><!-- タブコンテンツ 全体の終了-->
 </div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
 <!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->    
 </script>
@@ -269,6 +371,14 @@ Vue.component('mycomp', {
               }
     },
     methods:{
+      howto_use:function(e){
+        $.ajax({
+            type:'GET',
+            url:'/howtouse',
+           
+        });
+
+      },
       selectedFile: function(e) {// この関数は⇒を参照　http://tech.aainc.co.jp/archives/10714
                 // 選択された File の情報を保存しておく(input)
                 e.preventDefault();
@@ -292,7 +402,7 @@ Vue.component('mycomp', {
         success:function(data){
           if (data['failed_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
                         self.title_msg = data['failed_msg'] ; 
-                        resetButtonFlg = 'True';
+                        self.resetButtonFlg = 'True';
                     }else if(data['process_msg'] ){ //←このelse if節は、python側で読み込んだxlsxファイルのシートがすべて読み込めなかったときのもの
                         self.title_msg = data['process_msg'];
                         self.downloadFileName=data['dLFile'] ;

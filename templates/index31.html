@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+
+{% block title %}
+Index
+{% endblock %}
+
+
+{% block headline %}
+{{ title }}
+{% endblock %}
+
+{% block content %}
+
+<h4 class="mb-1 " id="msg">{{message}}</h4>
+<!-- Vue.js container -->
+<div id="app" class="m-3">
+    <mycomp/>
+</div>
+
+
+<!-- mycomp's template -->
+{% raw %}
+
+<script type="text/x-template" id="mycomp-template">
+<!-- ↓以下は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->   
+<!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
+  <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
+<div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
+  
+  <label>{{title_msg}}</label>
+  <hr/>
+  
+</div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
+<!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->    
+</script>
+{% endraw %}
+
+<!-- ******************** -->
+<!-- * Vue.js Component Script * -->
+<!-- ******************** -->
+<script>
+  //database view
+
+Vue.component('mycomp', {
+    template: '#mycomp-template',
+    data:function(){
+
+        return{  
+                }
+    },
+   });
+//start Vue.
+new Vue({
+    el:'#app',
+});
+</script>
+
+{% endblock %}
+
+
+
+
+{% block footer %}
+<!-- copyright 2021 <img src ="/static/logo.jpg?202109060605"/> -->
+Copyright 2021 <img src ="/static/logo.jpg?202108061354"/>
+
+{% endblock %}

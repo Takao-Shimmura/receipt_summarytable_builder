@@ -79,6 +79,7 @@ CREATE TABLE "insurerdata" (
     "kana_Insurer_Name" VARCHAR(255),
     "insurer_No_Str" VARCHAR(255),
     "soukatsu1Desti" VARCHAR(255),
+    "info" VARCHAR(255),
     PRIMARY KEY("id")
 );
 
@@ -94,6 +95,13 @@ CREATE TABLE "error_msg" (
     "insuredName" VARCHAR(255),
 
 【2021年　8月2日　デプロイ】
+ログイン
+ コマンドプロンプト内でheroku login 
+
+ データベースにアクセス
+heroku pg:psql --app receipt-summarytable-builder
+
+
 以下はSQLコマンド。文頭のSQLiteではなくPostgreSQL用に書き換える
 https://www.i-ryo.com/entry/2020/10/25/173932
 を参考に、INTEGERをSERIALに書き換える
@@ -174,14 +182,10 @@ CREATE TABLE "insurerdata" (
     "kana_Insurer_Name" VARCHAR(255),
     "insurer_No_Str" VARCHAR(255),
     "soukatsu1Desti" VARCHAR(255),
+    "info" VARCHAR(255),
     PRIMARY KEY("id")
 );
 
-ログイン
- コマンドプロンプト内でheroku login 
-
- データベースにアクセス
-heroku pg:psql --app receipt-summarytable-builder
 
 
 テーブルにCSVデータをインポートするコマンド

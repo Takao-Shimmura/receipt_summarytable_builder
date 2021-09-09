@@ -327,16 +327,17 @@ def get_soukatsu1Desti_count(listInList,soukatsu1Desti):
 def get_soukatsu1Desti_insur_dic(listInList,soukatsu1Desti):
     dic1={}
     for key1 in soukatsu1Desti:
-        list0=[]
-        for list2 in listInList:
-            if list2[0] == key1:
-                list1=[]
-                list1.append(list2[3])
-                list1.append(list2[2])
-                if list1 not in list0:
-                    list0.append(list1)
-                    #print('list0={}'.format(list0)) 
-        dic1[key1]=list0
+        if '△' not in key1:# 総括票Ⅰを作りたくない保険者
+            list0=[]
+            for list2 in listInList:
+                if list2[0] == key1:
+                    list1=[]
+                    list1.append(list2[3])
+                    list1.append(list2[2])
+                    if list1 not in list0:
+                        list0.append(list1)
+                        #print('list0={}'.format(list0)) 
+            dic1[key1]=list0
     return dic1
 
 # データベースのCalculateテーブルから
@@ -582,6 +583,19 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
                     target_sheet_cell1=target_sheet.cell(10, 6)#国保組合のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(10, 7)#国保組合のマッサージの費用額を入れるセル
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    kingaku_insert(loadDInt,target_sheet_cell2)
+            elif '保険組合' in loadD['kanji_Insurer_Name'] :
+                if loadD['title_AcupOrMass'] == 'はりきゅう':
+                    target_sheet_cell1=target_sheet.cell(8, 2)#保険組合のはりきゅうの件数を入れるセル
+                    kensuu_insert(target_sheet_cell1)
+                    target_sheet_cell2=target_sheet.cell(8, 4)#保険組合のはりきゅうの費用額を入れるセル
+                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    kingaku_insert(loadDInt,target_sheet_cell2)
+                elif loadD['title_AcupOrMass'] == 'マッサージ':
+                    target_sheet_cell1=target_sheet.cell(8, 6)#保険組合のマッサージの件数を入れるセル
+                    kensuu_insert(target_sheet_cell1)
+                    target_sheet_cell2=target_sheet.cell(8, 7)#保険組合のマッサージの費用額を入れるセル
                     loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             #保険者番号が6桁もしくは、山形県のように5桁の場合、

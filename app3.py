@@ -98,6 +98,10 @@ def index():
             message = '保険申請書　総括票作成　ホームページ')
 
 
+    
+  
+
+
 
 # アップロード機能
 @app.route('/upload', methods=['POST'])
@@ -380,7 +384,7 @@ def upload():
                                             number = ''
                                             for n in range(0,8,1):
                                                 
-                                                ###  ↓　DataFrameの場合、値が入っていない場合は’nan’
+                                                #  ↓　DataFrameの場合、値が入っていない場合は’nan’
                                                 #　判定はpd.isnull()
                                                 if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
                                                 get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
@@ -548,6 +552,7 @@ def upload():
         # しかし、上記のとおりに、date = datetime.datetime.now()　と書くとエラー
         date = datetime.now()
         # 2桁表示のゼロパディングは　参照⇒https://note.nkmk.me/python-zero-padding/
+        # loadD_obj)のから総括票ⅠⅡを作るべく、保険者情報を順番に並べなおしたのが、sortInsList
         sortInsList=sort_insureName_4Sokatsu1_fromloadD_obj(loadD_obj)
         template_sheet = wb['総括票（Ⅰ）(ひな形　禁削除)']
         # ↓　総括表１の送付先（soukatsu1Desti）だけを、重複なくリスト化したものがsoukatsu1Desti_List
@@ -561,56 +566,57 @@ def upload():
             #app.logger.info('count1int={}'.format((int(counter1 / 7 - 0.1)+1)))
             # ↓同じ総括表１の行き先（soukatsu1Desti）に、どれだけの保険者の数がはいるか？
             # を、変数yyに込める
-            yy=int(len(dicDesti_insur[desti]) / 7 - 0.1)+1
-            for x in range(yy):     
-                    target_sheet = wb.copy_worksheet(template_sheet)
-                    #app.logger.info('template_sheet={}'.format(template_sheet.sheet_properties.tabColor))
-                    # ↓　複製したシートのタブの色を、色なしにする
-                    target_sheet.sheet_properties.tabColor =None
-                    if x >= 1:
-                        target_sheet.title = '総括票（Ⅰ）('+ desti +'）'+str(x+1)+'枚目'
-                    else: 
-                        target_sheet.title = '総括票（Ⅰ）('+ desti +'）'
-                    # ↓ 複製したシート(総括票（Ⅰ）)に、それぞれの数値を入れる
-                    target_sheet.cell(14, 26).value = registerNo_Str_f #登録記号番号
-                    target_sheet.cell(17, 26).value = therapistName_f #施術管理者
-                    target_sheet.cell(20, 26).value = treatmentHosName_f #施術所名
-                    target_sheet.cell(6, 10).value = year_f #年
-                    target_sheet.cell(6, 21).value = month_f #月
-                    # ↓ 複製したシートが複数にわたり、x枚目がその最後の時は、
-                    # 保険者名が7段目までいかずに、途中(y段目)で終わるような仕掛け
-                    if x == yy-1:
-                        y = len(dicDesti_insur[desti]) - 7*(x)
-                    # ↓ 複製したシートが複数にわたり、x枚目がその途中の時は、
-                    # 7段目までフルに入力する
-                    elif x < (yy-1):
-                        y = 7
-                    #app.logger.info('y={}'.format(y))
-                    #app.logger.info('target_sheet.title={}'.format(target_sheet.title))
-                    
-                    # ↓ 複製したシート（総括表１）に、保険者名＋改行＋（はりきゅうorマッサージ）
-                    # を、上から順にｖ番目まで入れていく
-                    # （数列v+7*xを用いて、コピーがx枚目のときは、1枚目の続きの保険者が入るようにしてある）
-                    v=0
-                    for v in range(y):
-                        listv = dicDesti_insur[desti]
-                        target_sheet.cell(32 + 6 * v, 2).value = listv[v+7*x][0]+'\n'+'('+listv[v+7*x][1]+')'
+            if '△' not in desti:# 総括票Ⅰを作りたくない保険者
+                yy=int(len(dicDesti_insur[desti]) / 7 - 0.1)+1
+                for x in range(yy):     
+                        target_sheet = wb.copy_worksheet(template_sheet)
+                        #app.logger.info('template_sheet={}'.format(template_sheet.sheet_properties.tabColor))
+                        # ↓　複製したシートのタブの色を、色なしにする
+                        target_sheet.sheet_properties.tabColor =None
+                        if x >= 1:
+                            target_sheet.title = '総括票（Ⅰ）('+ desti +'）'+str(x+1)+'枚目'
+                        else: 
+                            target_sheet.title = '総括票（Ⅰ）('+ desti +'）'
+                        # ↓ 複製したシート(総括票（Ⅰ）)に、それぞれの数値を入れる
+                        target_sheet.cell(14, 26).value = registerNo_Str_f #登録記号番号
+                        target_sheet.cell(17, 26).value = therapistName_f #施術管理者
+                        target_sheet.cell(20, 26).value = treatmentHosName_f #施術所名
+                        target_sheet.cell(6, 10).value = year_f #年
+                        target_sheet.cell(6, 21).value = month_f #月
+                        # ↓ 複製したシートが複数にわたり、x枚目がその最後の時は、
+                        # 保険者名が7段目までいかずに、途中(y段目)で終わるような仕掛け
+                        if x == yy-1:
+                            y = len(dicDesti_insur[desti]) - 7*(x)
+                        # ↓ 複製したシートが複数にわたり、x枚目がその途中の時は、
+                        # 7段目までフルに入力する
+                        elif x < (yy-1):
+                            y = 7
+                        #app.logger.info('y={}'.format(y))
+                        #app.logger.info('target_sheet.title={}'.format(target_sheet.title))
                         
-                        for loadD in loadD_obj:
-                            if loadD['kanji_Insurer_Name'] == listv[v+7*x][0] \
-                                and loadD['title_AcupOrMass'] == listv[v+7*x][1]:
-                                if loadD['relationship'] == '本人':
-                                    target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
-                                    kensuu_insert(target_sheet_cell1)
-                                    target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
-                                    loadDInt = int(float(loadD['amount_Str']))#本人の費用額
-                                    kingaku_insert(loadDInt,target_sheet_cell2)
-                                else:
-                                    target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
-                                    kensuu_insert(target_sheet_cell1)
-                                    target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
-                                    loadDInt = int(float(loadD['amount_Str']))#家族の費用額
-                                    kingaku_insert(loadDInt,target_sheet_cell2)
+                        # ↓ 複製したシート（総括表１）に、保険者名＋改行＋（はりきゅうorマッサージ）
+                        # を、上から順にｖ番目まで入れていく
+                        # （数列v+7*xを用いて、コピーがx枚目のときは、1枚目の続きの保険者が入るようにしてある）
+                        v=0
+                        for v in range(y):
+                            listv = dicDesti_insur[desti]
+                            target_sheet.cell(32 + 6 * v, 2).value = listv[v+7*x][0]+'\n'+'('+listv[v+7*x][1]+')'
+                            
+                            for loadD in loadD_obj:
+                                if loadD['kanji_Insurer_Name'] == listv[v+7*x][0] \
+                                    and loadD['title_AcupOrMass'] == listv[v+7*x][1]:
+                                    if loadD['relationship'] == '本人':
+                                        target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
+                                        kensuu_insert(target_sheet_cell1)
+                                        target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
+                                        loadDInt = int(float(loadD['amount_Str']))#本人の費用額
+                                        kingaku_insert(loadDInt,target_sheet_cell2)
+                                    else:
+                                        target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
+                                        kensuu_insert(target_sheet_cell1)
+                                        target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
+                                        loadDInt = int(float(loadD['amount_Str']))#家族の費用額
+                                        kingaku_insert(loadDInt,target_sheet_cell2)
         template_sheet = wb['総括票（Ⅱ）(ひな形　禁削除)']            
         for insurL in sortInsList:
             target_sheet = wb.copy_worksheet(template_sheet)
