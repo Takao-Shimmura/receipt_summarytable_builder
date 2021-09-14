@@ -29,7 +29,7 @@ Index
     <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
     <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <p class="h6 text-right" >最終更新日　2021 09 09</p>
+  <p class="h6 text-right" >最終更新日　2021 09 15</p>
     <!-- 切り替えタブ部分 -->
   <ul class="nav nav-tabs" role="tablist">
     <!-- １つ目のタブ -->
@@ -274,7 +274,8 @@ Index
       youtube ループ再生　loop=1 だけではダメで、playlist=YouTubeIDも設定　参考⇒https://www.manicyouth.jp/youtube-embed-cannnot-loop/ -->
       <!-- <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/15-JaD33oLo?autoplay=1&mute=1&loop=1&playlist=15-JaD33oLo"></iframe> -->
       <!-- ↓　結局、web回線に負担がかかるので、autoplayもloopも設定せず -->
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/8C2imUe23SY"></iframe>
+      <!-- 全画面表示を可能にするにはallowfullscreenを入れる -->
+      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/8C2imUe23SY" allowfullscreen></iframe>
     </div>
   
     <br>
@@ -283,7 +284,7 @@ Index
     </div>
 
     <div class="embed-responsive embed-responsive-16by9">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/FxjbrDvPd1E" ></iframe>
+      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/FxjbrDvPd1E" allowfullscreen></iframe>
     </div>
 
     <br>
@@ -291,7 +292,7 @@ Index
       ３）県単(県障)もあつかう
     </div>
     <div class="embed-responsive embed-responsive-16by9">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/1fKMuQtlZfM"></iframe>
+      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/1fKMuQtlZfM" allowfullscreen></iframe>
     </div>
     <br>
     <div class="alert alert-primary">
@@ -299,15 +300,17 @@ Index
     </div>
 
     <div class="embed-responsive embed-responsive-16by9">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/xheAV4lNM1w"  ></iframe>
+      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/xheAV4lNM1w" allowfullscreen></iframe>
     </div>
     
   </div><!-- ２つ目のコンテンツ 終了-->
   <!-- ３つ目のコンテンツ -->
   <div class="tab-pane fade" id="third" role="tabpanel">
-    ※お問い合わせのページ<br><br>
+    ※更新履歴<br><br>
     <div class="alert alert-primary">
-        工事中
+      2021/09/15　「お問い合わせ」フォームを追加
+      <br>
+      2021/09/14　「使い方」動画を追加
     </div>
   </div><!-- ３つ目のコンテンツ 終了-->
     <!-- ４つ目のコンテンツ -->
@@ -352,9 +355,9 @@ Index
   </div><!-- ４つ目のコンテンツ 終了-->
     <!-- ５つ目のコンテンツ -->
   <div class="tab-pane fade" id="fifth" role="tabpanel">
-    ※更新履歴<br><br>
+    ※お問い合わせのページ<br><br>
     <div class="alert alert-primary">
-        工事中
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSck4xcocnS7kUdR5hZJQ5M4UoT--fE9RYsKP2veevWHys_M6g/viewform?usp=sf_link">仮設のお問い合わせフォームへ</a>
     </div>
   </div><!-- ５つ目のコンテンツ 終了-->
 </div><!-- タブコンテンツ 全体の終了-->
