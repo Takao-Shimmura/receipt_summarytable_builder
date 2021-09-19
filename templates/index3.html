@@ -14,7 +14,10 @@ Index
 
 {% block content %}
 
-<h4 class="mb-1" id="msg">{{message}}</h4>
+<h4 class="mb-1" id="msg">{{message}}
+
+</h4>
+
 <!-- Vue.js container -->
 <div id="app" class="m-3">
     <mycomp/>
@@ -25,11 +28,12 @@ Index
 {% raw %}
 
 <script type="text/x-template" id="mycomp-template">
+
 <!-- ↓以下は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->   
     <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
     <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <p class="h6 text-right" >最終更新日　2021 09 15</p>
+  <p class="h6 text-right" >最終更新日　2021 09 20</p>
     <!-- 切り替えタブ部分 -->
   <ul class="nav nav-tabs" role="tablist">
     <!-- １つ目のタブ -->
@@ -50,7 +54,7 @@ Index
     <!-- ４つ目のタブ -->
     <li class="nav-item">
       <a class="nav-link"  href="#fourth"
-          data-toggle="tab" role="tab">登録済み保険番号</a>
+          data-toggle="tab" role="tab" >登録済み保険番号</a>
     </li>
     <!-- ５つ目のタブ -->
     <li class="nav-item">
@@ -59,130 +63,197 @@ Index
     </li>
   </ul>
 
-<div class="tab-content"><!-- タブコンテンツの開始 -->
-    <!-- １つ目のコンテンツ -->
-  <div class="tab-pane fade show active" id="top" role="tabpanel">
-    
-      <label>{{title_msg}}</label>
-      <hr/>
-      <template v-if="formCloseFlg=='False'">
-        <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
-          <div class="form-group ">
-            <div class="input-group "><!-- input-group-lg   btn-lg-->
-                <!-- <div class="row" > -->
-              <div class="custom-file " >
-                <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
-                <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
-                <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
+  <div class="tab-content"><!-- タブコンテンツの開始 -->
+      <!-- １つ目のコンテンツ -->
+    <div class="tab-pane fade show active" id="top" role="tabpanel">
+      
+        <label>{{title_msg}}</label>
+        <hr/>
+        <template v-if="formCloseFlg=='False'">
+          <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
+            <div class="form-group ">
+              <div class="input-group "><!-- input-group-lg   btn-lg-->
+                  <!-- <div class="row" > -->
+                <div class="custom-file " >
+                  <!-- ↓この一行のv-on:changeだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+                  <input type="file" class="custom-file-input " @change="selectedFile" id="inputFile" name="file" >
+                  <label class="custom-file-label" for="inputFile" data-browse="フォルダより選択">ここにファイルをドラッグ&ドロップ</label>
+                </div>
+                  <!-- </div> -->
+                <div class="input-group-append active">
+                  <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+                </div>
               </div>
-                <!-- </div> -->
-              <div class="input-group-append active">
-                <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+            </div>
+            <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
+              <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
+          </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
+        </template>
+
+        <!-- Error message  -->
+        <template v-if="errOpenFlg=='True'">
+          <template v-if="errData=='False'">
+            <label>※読み込めなかったシートはありませんでした。</label>
+          </template>
+          <template v-else>
+      
+            <label>👇以下「エラーメッセージ」です</label>
+              　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
+              <ul class="list-group border-left border-right border-bottom list-unstyled">
+                <template v-for="items in errData">
+                  <li class="border-top" >
+                    {{items[0]}}
+                  </li>
+                  <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
+                      <ul>
+                        <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
+                        <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
+                        <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
+                        によるリスト作成で「tooltip」がうまく作れない。
+                        よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
+                        コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
+                        （Error messegeページが開くタイミング）で実行されるようにした。 -->
+                        <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
+                        <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
+                        反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
+                        　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
+                        【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
+                        【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
+
+                        <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
+                      data-toggle="tooltip" data-html="true" 
+                      v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202109040700&quot; />'"> 
+                          <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
+                            参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
+                          <template v-if="item[0]==''">
+                            {{''}}
+                            
+                          </template>  
+                          <template v-else>
+                            {{'【'+item[0]+'】'+item[1]}}
+                          </template> 
+                        </li>
+                      </ul>  
+                  </template>
+                </template>
+              </ul> 
+          </template>
+        </template>
+
+        <!-- Reset button  -->
+        <template v-if="resetButtonFlg=='True'">
+          <div class="form-group">
+            <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+            <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+            ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+            参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+          </div>
+        </template>
+
+        <!-- year_month Dialog -->
+        <div class="modal fade" id="year_month">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="card">
+                <div class="card-header">
+                          <h4 class="card-title">
+                              以下を確認して「申請書作成」ボタンを押してください
+                          </h4>
+                          <small class="form-text text-muted ">
+                                ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
+                          </small>
+                </div>
+                <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+                <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+                <div class="card-body">
+                  <div class="form-group form-inline">
+                              <label class="col-2" for="year">令和</label>
+                              <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
+                              <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
+                  </div>           
+                
+                  <div class="form-group row">
+                              <label class="col-5" for="therapist">施術者名</label>
+                              <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
+                  </div>
+                  <div class="form-group row">
+                              <label class="col-5" for="treatmentHos">施術所名</label>
+                              <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
+                  </div>
+                  <div class="form-group row">
+                              <label class="col-5" for="registerNo">登録記号・番号</label>
+                              <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
+                  </div>
+                  <div class="form-group">
+                    <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
+                    <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+                    <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
+                    ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
+                    参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <!-- ↓この一行のv-on:clickだけは⇒を参照　http://tech.aainc.co.jp/archives/10714 -->
-            <button type="submit"  class="btn btn-primary" v-on:click="read_file">送信</button>
-        </div>  <!-- 上記問題となった最終行　<・form>では×バツ -->   
-      </template>
-
-      <!-- Error message  -->
-      <template v-if="errOpenFlg=='True'">
-        <template v-if="errData=='False'">
-          <label>※読み込めなかったシートはありませんでした。</label>
-        </template>
-        <template v-else>
-    
-          <label>👇以下「エラーメッセージ」です</label>
-            　<label>(※総括表ファイルの「読み込み不可　エラーメッセージ」シートにも書き込まれています)</label>
-            <ul class="list-group border-left border-right border-bottom list-unstyled">
-              <template v-for="items in errData">
-                <li class="border-top" >
-                  {{items[0]}}
-                </li>
-                <template v-for="item in items.slice(1)"><!--https://maku77.github.io/js/array/slice.html  -->
-                    <ul>
-                      <!--↓　【1】bootstrapの「tooltip」をリストに使う時　参照⇒https://blog.capilano-fw.com/?p=4773   -->
-                      <!-- ↓　但し【1-1】、「tooltip」の「title=」属性を上記HPのように「data-original-title」としなくてもうごいてくれた -->
-                      <!-- ↓　但し【1-2】、HTMLが作られてから、「tooltip」を作成する順番にしないと、for文
-                      によるリスト作成で「tooltip」がうまく作れない。
-                      よって、上記HPと少し変えて、「tooltip」作成のメソッド①$('[data-toggle="tooltip"]').tooltip();と
-                      コールバックである②Vue.nextTick(() => は、errOpenFlgがtrueになるタイミング
-                      （Error messegeページが開くタイミング）で実行されるようにした。 -->
-                      <!-- 【2】「tooltip」に画像を加えるには、参照⇒https://qiita.com/NaokiIshimura/items/6e6a593f4f935459bf07 -->
-                      <!-- 【3】一度ブラウザで読み込んだ「tooltip」の画像が、名前を変えずに中身だけ変えたとき、ブラウザに
-                      反映されない問題。参照⇒https://nabewakashi.com/solve-image-cache-problem -->
-                      　<!-- 対処法⇒【3-1】.jpgの後に「?＋日時の文字列（日付が一般的）」をつける。
-                      【3-2】imgタグ内の最後に「/（これは何でもOK、スラッシュが一般的）」を加える。
-                      【3-3】画像の中身を変更するたびに、HTML上で「?＋日時の文字列」をそのたびに書き換える（現在の日時） -->
-
-                      <li class="list-group-item-sm list-unstyled ml-4 small border-top-0 border-left-0 border-right-0" 
-                    data-toggle="tooltip" data-html="true" 
-                    v-bind:title="'【'+item[0]+'】'+item[1]+'<br><img src=&quot;/static/'+item[0]+'.jpg?202109040700&quot; />'"> 
-                        <!--↑「v-bind:title=」・・・vueディレクティブ内の属性に、変数を使う時には「v-bind:」は必要！
-                          参照⇒ 『Python フレームワークFlaskで学ぶ Webアプリケーションのしくみとつくり方 [掌田津耶乃]』P204  '+item[0]+'-->
-                        <template v-if="item[0]==''">
-                          {{''}}
-                          
-                        </template>  
-                        <template v-else>
-                          {{'【'+item[0]+'】'+item[1]}}
-                        </template> 
-                      </li>
-                    </ul>  
-                </template>
-              </template>
-            </ul> 
-        </template>
-      </template>
-
-      <!-- Reset button  -->
-      <template v-if="resetButtonFlg=='True'">
-        <div class="form-group">
-          <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
-          <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
-          ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
-          参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
         </div>
-      </template>
+        <!-- kentan Dialog -->
+        <div class="modal fade" id="kentanDialog">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+              <div class="card">
+                <div class="card-header">
+                          <h4 class="card-title">
+                              以下の『県単医療助成費申請書』の項目を選択して「申請書作成」ボタンを押してください
+                          </h4>
+                </div>
+                <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
+                <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
+                <div class="card-body">
+                  <template v-for="items in kentanData" >
+                    <div class="border-bottom">
+                    シート名【 {{items['sheetName']}}】
+                      <br>
+                        <div class="form-group form-check form-check-inline">
+                                    <label class="col-5">施術の種類</label>
+                                    <input type="radio"  class="form-check-input" id="acup_moxi" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="はりきゅう"><label for="acup_moxi" class="col-4">はりきゅう</label>
+                                    <input type="radio"  class="form-check-input" id="massage" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="マッサージ"><label for="massage" class="col-4">マッサージ</label>
+                        </div>
+                      <br>
+                        <template v-if="items['kankatsu_kentan'] =='新潟県'" >
+                          <div class="form-group form-check form-check-inline">
+                            <label for="kenrou" class="col-4" >申請区分</label>
+                            <input type="radio"  class="form-check-input" id="kenrou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県老"><label for="kenrou" class="col-2" >県老</label>
+                            <input type="radio"  class="form-check-input" id="kensyou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県障"><label for="kensyou" class="col-2">県障</label>
+                            <input type="radio"  class="form-check-input" id="kenoya" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県親"><label for="kenoya" class="col-2">県親</label>
+                            <input type="radio"  class="form-check-input" id="tanshi" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="単子"><label for="tanshi" class="col-2">単子</label>
+                          </div>
+                        </template>
+                      </div>
+                    <br>
+                  </template>
+                
+                  <div class="form-group">
+                    <template v-if="!kentanRadioBflg">
+                      <!-- kentanRadioBflg = false・・・つまり、はりきゅう/マッサージ　を選択していない
+                      ものが一つでもある場合 -->
+                      <!-- 非活性になっている送信ボタンにツールチップを浮かび上がらせるには、
+                      ↓　の<div class="d-inline-block" ・・・</div>でボタンを囲まないといけない
+                      参考⇒https://getbootstrap.jp/docs/4.4/components/tooltips/
+                      の「Disabled elements」項目 -->
+                      <div class="d-inline-block" tabindex="0" data-toggle="tooltip" 
+                      title="はりきゅう/マッサージ を「すべて」選択しないとボタンを押せません" >
+                        <button type="submit"  class="btn btn-primary" style="pointer-events: none;" disabled>申請書作成</button>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <!-- kentanRadioBflg = true・・・つまり、はりきゅう/マッサージ　が
+                      すべて選択されてある場合 -->
+                      <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
+                    </template>
+                      <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+                  </div>
+                    
 
-      <!-- year_month Dialog -->
-      <div class="modal fade" id="year_month">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="card">
-              <div class="card-header">
-                        <h4 class="card-title">
-                            以下を確認して「申請書作成」ボタンを押してください
-                        </h4>
-                        <small class="form-text text-muted ">
-                              ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
-                        </small>
-              </div>
-              <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
-              <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
-              <div class="card-body">
-                <div class="form-group form-inline">
-                            <label class="col-2" for="year">令和</label>
-                            <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
-                            <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
-                </div>           
-              
-                <div class="form-group row">
-                            <label class="col-5" for="therapist">施術者名</label>
-                            <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
-                </div>
-                <div class="form-group row">
-                            <label class="col-5" for="treatmentHos">施術所名</label>
-                            <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
-                </div>
-                <div class="form-group row">
-                            <label class="col-5" for="registerNo">登録記号・番号</label>
-                            <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
-                </div>
-                <div class="form-group">
-                  <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
-                  <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
                   <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
                   ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
                   参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -191,73 +262,6 @@ Index
             </div>
           </div>
         </div>
-      </div>
-      <!-- kentan Dialog -->
-      <div class="modal fade" id="kentanDialog">
-        <div class="modal-dialog modal-lg" role="document">
-          <div class="modal-content">
-            <div class="card">
-              <div class="card-header">
-                        <h4 class="card-title">
-                            以下の『県単医療助成費申請書』の項目を選択して「申請書作成」ボタンを押してください
-                        </h4>
-              </div>
-              <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
-              <!--⇒を参照　http://www.tohoho-web.com/bootstrap/forms.html-->
-              <div class="card-body">
-                <template v-for="items in kentanData" >
-                  <div class="border-bottom">
-                  シート名【 {{items['sheetName']}}】
-                    <br>
-                      <div class="form-group form-check form-check-inline">
-                                  <label class="col-5">施術の種類</label>
-                                  <input type="radio"  class="form-check-input" id="acup_moxi" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="はりきゅう"><label for="acup_moxi" class="col-4">はりきゅう</label>
-                                  <input type="radio"  class="form-check-input" id="massage" v-bind:name="'acup_mass'+[kentanData.indexOf(items)]" v-model="items['title_AcupOrMass']" value="マッサージ"><label for="massage" class="col-4">マッサージ</label>
-                      </div>
-                    <br>
-                      <template v-if="items['kankatsu_kentan'] =='新潟県'" >
-                        <div class="form-group form-check form-check-inline">
-                          <label for="kenrou" class="col-4" >申請区分</label>
-                          <input type="radio"  class="form-check-input" id="kenrou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県老"><label for="kenrou" class="col-2" >県老</label>
-                          <input type="radio"  class="form-check-input" id="kensyou" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県障"><label for="kensyou" class="col-2">県障</label>
-                          <input type="radio"  class="form-check-input" id="kenoya" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="県親"><label for="kenoya" class="col-2">県親</label>
-                          <input type="radio"  class="form-check-input" id="tanshi" v-bind:name="'kentan'+[kentanData.indexOf(items)]" v-model="items['title_kentan']" value="単子"><label for="tanshi" class="col-2">単子</label>
-                        </div>
-                      </template>
-                    </div>
-                  <br>
-                </template>
-              
-                <div class="form-group">
-                  <template v-if="!kentanRadioBflg">
-                    <!-- kentanRadioBflg = false・・・つまり、はりきゅう/マッサージ　を選択していない
-                    ものが一つでもある場合 -->
-                    <!-- 非活性になっている送信ボタンにツールチップを浮かび上がらせるには、
-                    ↓　の<div class="d-inline-block" ・・・</div>でボタンを囲まないといけない
-                    参考⇒https://getbootstrap.jp/docs/4.4/components/tooltips/
-                    の「Disabled elements」項目 -->
-                    <div class="d-inline-block" tabindex="0" data-toggle="tooltip" 
-                    title="はりきゅう/マッサージ を「すべて」選択しないとボタンを押せません" >
-                      <button type="submit"  class="btn btn-primary" style="pointer-events: none;" disabled>申請書作成</button>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <!-- kentanRadioBflg = true・・・つまり、はりきゅう/マッサージ　が
-                    すべて選択されてある場合 -->
-                    <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
-                  </template>
-                    <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
-                </div>
-                  
-
-                <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
-                ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
-                参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
   </div><!-- １つ目のコンテンツ 終了-->
   <!-- ２つ目のコンテンツ -->
@@ -308,6 +312,8 @@ Index
   <div class="tab-pane fade" id="third" role="tabpanel">
     ※更新履歴<br><br>
     <div class="alert alert-primary">
+      2021/09/20　「登録済み保険番号」を追加
+      <br>
       2021/09/15　「お問い合わせ」フォームを追加
       <br>
       2021/09/14　「使い方」動画を追加
@@ -317,43 +323,270 @@ Index
   </div><!-- ３つ目のコンテンツ 終了-->
     <!-- ４つ目のコンテンツ -->
   <div class="tab-pane fade" id="fourth" role="tabpanel">
-    ※登録済み　保険番号　一覧<br><br>
-    <div class="alert alert-primary">
-      工事中
-  </div>
-    <!-- <nav id="navbar-example3" class="navbar navbar-light bg-light">
-      <a class="navbar-brand" href="#">保険者一覧</a>
-      <nav class="nav nav-pills flex-column">
-        <a class="nav-link" href="#item-1">協会けんぽ</a>
-        <nav class="nav nav-pills flex-column">
-          <a class="nav-link ml-3 my-1" href="#item-1-1">Item 1-1</a>
-          <a class="nav-link ml-3 my-1" href="#item-1-2">Item 1-2</a>
-        </nav>
-        <a class="nav-link" href="#item-2">Item 2</a>
-        <a class="nav-link" href="#item-3">Item 3</a>
-        <nav class="nav nav-pills flex-column">
-          <a class="nav-link ml-3 my-1" href="#item-3-1">Item 3-1</a>
-          <a class="nav-link ml-3 my-1" href="#item-3-2">Item 3-2</a>
-        </nav>
-      </nav>
-    </nav>
-    
-    <div data-spy="scroll" data-target="#navbar-example3" data-offset="0">
-      <h4 id="item-1">冒頭に【0】を付加</h4>
-      <p>？？？？？</p>
-      <h5 id="item-1-1">Item 1-1</h5>
-      <p>...</p>
-      <h5 id="item-1-2">Item 1-2</h5>
-      <p>...</p>
-      <h4 id="item-2">孝雄</h4>
-      <p>...</p>
-      <h4 id="item-3">退職者医療は冒頭に【67】を付加</h4>
-      <p>...</p>
-      <h5 id="item-3-1">新潟県</h5>
-      <p>...</p>
-      <h5 id="item-3-2">山形県</h5>
-      <p>...</p>
-    </div> -->
+  
+    <div class="alert alert-primary h4 mb-4">
+      登録済み　保険者番号　一覧
+    </div>
+    <div class="container mb-5">
+      
+      <div class="row">
+        <div class="col-3">
+          <ul id="sidemenu-1" class="nav nav-pills flex-column sticky-top">
+            <li class="nav-item">
+              <a href="#kyoukaikennpo" class="nav-link h5">協会けんぽ<br>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#kumiaihoken" class="nav-link h5">組合保険<br>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#kyousai" class="nav-link h5">共　済<br>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#kokuhokumiai" class="nav-link h5">国保組合<br>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#kokuho-shicyouson" class="nav-link h5">国保（市町村）<br>
+                <h6>※先頭に【67】付くと退職者医療</h6></a>
+              <ul id="sidemenu-1" class="nav nav-pills flex-column pl-3">
+                <li class="nav-item"><a href="#kokuho-niigataken" class="nav-link">新潟県</a></li>
+                <li class="nav-item"><a href="#kokuho-yamagataken" class="nav-link">山形県</a></li>
+                <li class="nav-item"><a href="#kokuho-fukushimaken" class="nav-link">福島県</a></li>
+                <li class="nav-item"><a href="#kokuho-gunmaken" class="nav-link">群馬県</a></li>
+                <li class="nav-item"><a href="#kokuho-naganoken" class="nav-link">長野県</a></li>
+                <li class="nav-item"><a href="#kokuho-toyamaken" class="nav-link">富山県</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a href="#koukikourei" class="nav-link h5">後期高齢者医療広域連合<br>
+              <h6>※上4桁で判定</h6></a>
+            </li>
+            
+          </ul>
+        </div>
+        <div class="col-9">
+          <h4 class="mb-3 mt-5" id="kyoukaikennpo">協会けんぽ</h4>
+          <table class="table table-striped ml-2">
+            <thead class="thead-light">
+              <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+            </thead>
+            <tbody>
+            <template v-for="item in insurerdataList">
+              <!-- ↓検索条件　文字列に'全国健康保険協会'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+              <!-- ↓検索条件　文字列の先頭に'1'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('全国健康保険協会') && item['insurer_No_Str'].startsWith('1')">
+                <!-- ↓　協会けんぽ　は　0 始まりなので、保険者番号の先頭に 0 を付け足しておく -->
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>0{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+            </template> 
+            </tbody>
+          </table>
+
+          <h4 class="mb-3 mt-5" id="kumiaihoken">組合保険</h4>
+          <table class="table table-striped ml-2">
+            <thead class="thead-light">
+              <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+            </thead>
+            <tbody>
+            <template v-for="item in insurerdataList">
+              <!-- ↓検索条件　文字列に'健康保険組合'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+              <!-- ↓検索条件　文字列の先頭に'6'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('健康保険組合') && item['insurer_No_Str'].startsWith('6')">
+                <!-- ↓　組合保険は　0 始まりなので、保険者番号の先頭に 0 を付け足しておく -->
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>0{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+            </template> 
+            </tbody>
+          </table>
+
+          <h4 class="mb-3 mt-5" id="kyousai">共　済</h4>
+          <table class="table table-striped ml-2">
+            <thead class="thead-light">
+              <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+            </thead>
+            <tbody>
+            <template v-for="item in insurerdataList">
+              <!-- ↓検索条件　文字列に'共済'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+              <!-- ↓検索条件　文字列の先頭に'34'から始まる⇒学校共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('34')">
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+
+              <!-- ↓検索条件　文字列に'共済'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+              <!-- ↓検索条件　文字列の先頭に'31'から始まる⇒国家公務員共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('31')">
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+
+              <!-- ↓検索条件　文字列の先頭に'32'から始まる⇒地方公務員共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('32')">
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+
+              <!-- ↓検索条件　文字列の先頭に'33'から始まる⇒警察共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('33')">
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+
+            </template> 
+            </tbody>
+          </table>
+
+          <h4 class="mb-3 mt-5" id="kokuhokumiai">国保組合</h4>
+          <table class="table table-striped ml-2">
+            <thead class="thead-light">
+              <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+            </thead>
+            <tbody>
+            <template v-for="item in insurerdataList">
+              <!-- ↓検索条件　文字列に'国民健康保険組合'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+              <template v-if="item['kanji_Insurer_Name'].includes('国民健康保険組合') ">
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                </tr>
+              </template> 
+            </template> 
+            </tbody>
+          </table>
+
+            <h4 class="mb-3 mt-5" id="kokuho-shicyouson">国保（市町村）</h4>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-niigataken">新潟県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'新潟県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'15'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('新潟県') && item['insurer_No_Str'].startsWith('15') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-yamagataken">山形県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'山形県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'6'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('山形県') && item['insurer_No_Str'].startsWith('6') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-fukushimaken">福島県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'福島県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'7'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('福島県') && item['insurer_No_Str'].startsWith('7') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-gunmaken">群馬県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'群馬県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'10'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('群馬県') && item['insurer_No_Str'].startsWith('10') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-naganoken">長野県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'長野県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'20'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('長野県') && item['insurer_No_Str'].startsWith('20') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-toyamaken">富山県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'富山県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'16'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('富山県') && item['insurer_No_Str'].startsWith('16') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            
+            <h4 class="mb-3 mt-5" id="koukikourei">後期高齢者医療広域連合</h4>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'後期高齢者医療広域連合'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の末尾に'****'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['kanji_Insurer_Name'].includes('後期高齢者医療広域連合') && item['insurer_No_Str'].endsWith('****')">
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>          
+        </div>
+      </div>
+    </div>
   </div><!-- ４つ目のコンテンツ 終了-->
     <!-- ５つ目のコンテンツ -->
   <div class="tab-pane fade" id="fifth" role="tabpanel">
@@ -372,7 +605,28 @@ Index
 <!-- * Vue.js Component Script * -->
 <!-- ******************** -->
 <script>
-  //database view
+//　↓　トップページにアクセス（@app.route('/',methods=['GET'])）
+// したときに、保険者番号一覧をinsdata変数に入れて、render_template
+// によってFlaskがテンプレート側に送信してくれるのだが、
+// jinjaテンプレート⇒vueコンテナ　に変数の中身を移せない問題があった
+// それを解決するために、以下のように送信された内容をjson化する
+// 参考⇒https://ymgsapo.com/2019/10/12/pass-value-template/
+// ※注意事項としては、render_templateで送ってくるinsdataは
+// jsonifyしてはいけない！
+var d = eval({{insdata|tojson}})
+//insdataは、python側では、idの順番の辞書inリストになっているのだが、
+//render_template によって送信されてくると、なぜだかidの順番がぐちゃぐちゃ
+//な連想配列になってしまう。よってidの順番に直す
+//参考⇒https://qiita.com/PianoScoreJP/items/f0ff7345229871039672
+d.sort(function(a,b){
+    if(a.id < b.id) return -1;
+    if(a.id > b.id) return 1;
+    return 0;
+});
+
+console.log(d) 
+
+//database view
 
 Vue.component('mycomp', {
     template: '#mycomp-template',
@@ -404,6 +658,7 @@ Vue.component('mycomp', {
                 kentanErrData:[],//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
                 kentanOpenFlg: 'False',//県障ダイアログを開くためのフラグ
                 kentanDialogFlg: 'False',//県障ダイアログが開いたかどうかをpython側に伝えるためのフラグ
+                insurerdataList:d,
               }
     },
     methods:{
@@ -469,7 +724,7 @@ Vue.component('mycomp', {
                         self.uploadedData = data['uploadedData'];//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
                         self.uploadedErrData = data['uploadedErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
                         self.kentanData = data['kentanData'];//県単のデータ（配列　「県老/県障/県親/単子_はき/マ」未分類　kentanダイアログを表示するために一時預かり）
-                        console.log(data['kentanData']);
+                        //console.log(data['kentanData']);
                         self.kentanErrData = data['kentanErrData'];//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
                         $('#kentanDialog').modal('show');//県単ダイアログを開くためのメソッド
                           
@@ -661,7 +916,7 @@ Vue.component('mycomp', {
           //for...in文　オブジェクト（辞書inリスト）を取り出す場合
           //参考　https://qiita.com/endam/items/808a084859e3a101ab8f　
           for(let items of this.kentanData){
-            console.log(items['title_AcupOrMass']);
+            //console.log(items['title_AcupOrMass']);
             if(items['title_AcupOrMass']=="None"){
               flg=false;
               //console.log(flg);
@@ -676,7 +931,7 @@ Vue.component('mycomp', {
                 $('[data-toggle="tooltip"]').tooltip({
                 })
                 }); */
-          console.log(flg);
+          //console.log(flg);
           return flg
         }
 
@@ -707,6 +962,7 @@ Vue.component('mycomp', {
 new Vue({
     el:'#app',
 });
+
 </script>
 
 {% endblock %}

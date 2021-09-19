@@ -135,6 +135,8 @@ class InsurerData(Base):
     kana_Insurer_Name= Column(String(255))
     insurer_No_Str= Column(String(255))
     soukatsu1Desti= Column(String(255))
+    info= Column(String(255))
+    info_admin= Column(String(255))
     # get Dict data
     def to_dict(self):
         return{
@@ -143,12 +145,14 @@ class InsurerData(Base):
             'kana_Insurer_Name':str(self.kana_Insurer_Name),
             'insurer_No_Str':str(self.insurer_No_Str),
             'soukatsu1Desti':str(self.soukatsu1Desti), 
+            'info':str(self.info), 
+            'info_admin':str(self.info_admin), 
         }
 
 
 def get_dic_schCond2calAttr():
     return{
-        'insurerNoLast_Cell':'insurerNo_Str',
+        'insurerNoLast_Cell':'insurer_No_Str',
         'insuraCodeNo_Cell':'insuraCodeNo_Str',
         'name_Cell':'name',
         'nameKana_Cell':'nameKana',
@@ -173,12 +177,30 @@ def get_search_condition():
     ses.close()# 終わったら必ずセッションを閉じておかないと、SQLalchemy内でのエラーが出る（それでも動作は完遂してくれるが）
     return conditions
 
+#保険者番号一覧をDBのInsurerdataテーブルから引き出す
+
+def get_insurerData_all():
+    Session = sessionmaker(bind=engine)
+    ses = Session()
+    re = ses.query(InsurerData).all()
+    insurerData_all = get_by_list(re)
+    ses.close()# 終わったら必ずセッションを閉じておかないと、SQLalchemy内でのエラーが出る（それでも動作は完遂してくれるが）
+    #print('insurerData_all={}'.format(insurerData_all)) 
+    return insurerData_all
+
 # ↓　get_by_list()関数にて個々の検索条件を「辞書」に。
 # そして複数の辞書（検索条件）をまとめて、リスト化する。
 def get_by_list(arr):
     res = []
     for item in arr:
         res.append(item.to_dict())
+    for eachres in res:
+        #　↓　保険者番号一覧　での備考（'info'項目）が、
+        #空欄だった場合、あえて空文字''を入れておいて、
+        #一覧表にNoneと表示されないようにする
+        if eachres['info'] == 'None':
+            eachres['info']=''
+        #print('res={}'.format(res)) 
     return res 
 
 # 辞書化された検索の条件から、'?_?'という文字列を、
@@ -213,7 +235,7 @@ def get_name_split_space(name1):
 def define_soukatsu1Desti(dic1):
     Session = sessionmaker(bind=engine)
     ses = Session()
-    #　↓　try文でd_dic['insurerNo_Str'}の内容がInsurerDataを検索して一致すれば、
+    #　↓　try文でd_dic['insurer_No_Str'}の内容がInsurerDataを検索して一致すれば、
     #  dic1['soukatsu1Desti']1に、保険者の宛先を込めることができる。
     # except文の中のif文で、Falseのときと、そうでないときを条件分岐しており、
     # さらなるtry文によって後期高齢者の保険者番号のときに、先頭4桁＋’****’の文字列を検索。
@@ -225,23 +247,23 @@ def define_soukatsu1Desti(dic1):
     # 参考　https://www.atmarkit.co.jp/ait/articles/1909/06/news019.html
     try:
         myinsdata = ses.query(InsurerData).\
-        filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str']).one()
+        filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str']).one()
         dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
         dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
         dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
     
     except NoResultFound:
-        if dic1['insurerNo_Str'] =='False':
+        if dic1['insurer_No_Str'] =='False':
             dic1['soukatsu1Desti'] = 'False'
             dic1['kana_Insurer_Name'] = 'False'
             dic1['kanji_Insurer_Name'] = 'False'
-        #　↓　協会けんぽ　の一番最初の桁が0始まりなので、
+        #　↓　協会けんぽ　組合保険　の一番最初の桁が0始まりなので、
         # insurardataに登録されている保険番号と合致しない。そのときは
         # 先頭の0を消去して、再検索してみる
-        elif dic1['insurerNo_Str'][0:1] =='0':
+        elif dic1['insurer_No_Str'][0:1] =='0':
             try:
                 myinsdata = ses.query(InsurerData).\
-                filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str'][1:] ).one()
+                filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][1:] ).one()
                 dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
                 dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                 dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
@@ -252,10 +274,10 @@ def define_soukatsu1Desti(dic1):
         #　↓　国保の退職者医療　の一番最初の桁が67始まりなので、
         # insurardataに登録されている保険番号と合致しない。そのときは
         # 先頭の67を消去して、再検索してみる
-        elif dic1['insurerNo_Str'][0:2] =='67':
+        elif dic1['insurer_No_Str'][0:2] =='67':
             try:
                 myinsdata = ses.query(InsurerData).\
-                filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str'][2:] ).one()
+                filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][2:] ).one()
                 dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
                 dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                 dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
@@ -265,7 +287,7 @@ def define_soukatsu1Desti(dic1):
                 # 下5桁（[3:] ）で検索してみる
                 try:
                     myinsdata = ses.query(InsurerData).\
-                    filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str'][3:] ).one()
+                    filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][3:] ).one()
                     dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
                     dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                     dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
@@ -278,7 +300,7 @@ def define_soukatsu1Desti(dic1):
         # 上4桁を残して、下4桁を「****」に変えて、再検索してみる
         else:
             try:
-                myinsdata = ses.query(InsurerData).filter(InsurerData.insurer_No_Str==dic1['insurerNo_Str'][0:4]+'****').one()
+                myinsdata = ses.query(InsurerData).filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][0:4]+'****').one()
                 dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
                 dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                 dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
@@ -407,7 +429,7 @@ def error_Msg_Sheet(err_obj,errKentan_obj,wb2):
                     list4.append([1,'「療養を受けた者の氏名」の記入漏れ'])
                 if l4['nameKana']== 'False' or l4['nameKana']== '0':
                     list4.append([2,'「療養を受けた者の氏名」(フリガナ))の記入漏れ'])
-                if l4['insurerNo_Str']== 'False':
+                if l4['insurer_No_Str']== 'False':
                     list4.append([3,'「保険者番号」の記入漏れ'])
                 if l4['insuraCodeNo_Str']=='False'or l4['insuraCodeNo_Str']== '0':
                     list4.append([4,'「被保険者証等の記号番号」の記入漏れ'])
@@ -545,7 +567,7 @@ def koukikourei_No_Sort(ldD_obj,wb1):
 
 def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
     for loadD in loadD_obj:
-            #app.logger.info('insurerNo_Str={}'.format(loadD['kanji_Insurer_Name']+loadD['insurerNo_Str'][0:1]))
+            #app.logger.info('insurer_No_Str={}'.format(loadD['kanji_Insurer_Name']+loadD['insurer_No_Str'][0:1]))
             if '協会' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(7, 2)#協会けんぽのはりきゅうの件数を入れるセル
@@ -603,7 +625,7 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
             #なお、国保組合も、6桁～5桁だが、前elif節
             # (elif '国民健康保険組合' )のところで
             #スクリーニングしてあるので心配いらない
-            elif len(loadD['insurerNo_Str']) == 6 or len(loadD['insurerNo_Str']) == 5 or loadD['insurerNo_Str'][0:2] == '67' :
+            elif len(loadD['insurer_No_Str']) == 6 or len(loadD['insurer_No_Str']) == 5 or loadD['insurer_No_Str'][0:2] == '67' :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(12, 2)#国保のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
@@ -616,7 +638,7 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
                     target_sheet_cell2=target_sheet.cell(12, 7)#国保のマッサージの費用額を入れるセル
                     loadDInt = int(float(loadD['amount_Str']))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
-            elif loadD['insurerNo_Str'][0:2] == '39':
+            elif loadD['insurer_No_Str'][0:2] == '39':
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(13, 2)#後期高齢のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
@@ -632,7 +654,7 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
 
 def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
     for kenD in KentanD_obj:
-            #app.logger.info('insurerNo_Str={}'.format(kenD['kanji_Insurer_Name']+kenD['insurerNo_Str'][0:1]))
+            #app.logger.info('insurer_No_Str={}'.format(kenD['kanji_Insurer_Name']+kenD['insurer_No_Str'][0:1]))
             if kenD['title_kentan'] =='県障':
                 if kenD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(26, 2)#県障のはりきゅうの件数を入れるセル

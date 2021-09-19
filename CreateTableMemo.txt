@@ -80,6 +80,7 @@ CREATE TABLE "insurerdata" (
     "insurer_No_Str" VARCHAR(255),
     "soukatsu1Desti" VARCHAR(255),
     "info" VARCHAR(255),
+    "info_admin" VARCHAR(255),
     PRIMARY KEY("id")
 );
 
@@ -183,6 +184,7 @@ CREATE TABLE "insurerdata" (
     "insurer_No_Str" VARCHAR(255),
     "soukatsu1Desti" VARCHAR(255),
     "info" VARCHAR(255),
+    "info_admin" VARCHAR(255),
     PRIMARY KEY("id")
 );
 

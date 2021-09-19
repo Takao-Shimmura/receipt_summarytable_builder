@@ -19,7 +19,11 @@
     <!-- ⇒を参照　https://www.willstyle.co.jp/blog/2751/ -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
-<body>
+<body class="py-5" data-spy="scroll" data-target="#sidemenu-1" data-offset="10">
+    <!-- ↑　<body>以下のclassは、「登録済み　保険番号」タブで、
+        スクロールスパイを設定するときに必要。
+      ⇒を参照　https://homupedia.com/bootstrap4-scrollspy.html
+    　⇒を参照　https://codepen.io/takeshi-du/pen/XxYaZz　-->
 
     <div class="container">
         <h1 class="display-6">
@@ -40,6 +44,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.js"></script>
     <!-- <script>$('[data-toggle="tooltip"]').tooltip()</script> -->
     <script>
+    
     bsCustomFileInput.init();
 
     document.getElementById('inputFileReset').addEventListener('click', function() {

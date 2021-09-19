@@ -48,7 +48,7 @@ from myutil3 import Search_condition,InsurerData,\
         soukatsu1Desti_List_set,get_soukatsu1Desti_insur_dic,\
         kensuu_insert,kingaku_insert,koukikourei_No_Sort,\
         error_Msg_Sheet,loadD_obj_furiwake_kenshikai,\
-        KentanD_obj_furiwake_kenshikai
+        KentanD_obj_furiwake_kenshikai,get_insurerData_all
 
 
 #　↓　herokuにデプロイすると、画像ファイルが読み込めない。
@@ -92,15 +92,12 @@ def index():
         +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' \
              + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2)+'秒' \
                 +str(now.microsecond)+'マイクロ秒'
-    
+    d=get_insurerData_all()
+    # ↑　get_insurerData_all() 保険者番号一覧をゲット
     return render_template('index3.html',\
             title = '新潟県鍼灸マッサージ師会　公認',\
-            message = '保険申請書　総括票作成　ホームページ')
-
-
-    
-  
-
+            message = '保険申請書　総括票作成　ホームページ',\
+            insdata = d)
 
 
 # アップロード機能
@@ -376,11 +373,11 @@ def upload():
                                     if not pd.isnull(cellV1) :
 
                                         
-                                        # ↓　もしも、更新先のテーブルの「属性」に'insurerNo_Str'(保険者番号)という文字列
+                                        # ↓　もしも、更新先のテーブルの「属性」に'insurer_No_Str'(保険者番号)という文字列
                                         # が含まれていたら、'insurerNoLast_Cell'と'insurerNo_CellStep'を駆使して
-                                        # 保険者番号を抽出し、'insurerNo_Str'をキーとして
+                                        # 保険者番号を抽出し、'insurer_No_Str'をキーとして
                                         # 文字列として入れておく
-                                        if 'insurerNo_Str' in cA:
+                                        if 'insurer_No_Str' in cA:
                                             number = ''
                                             for n in range(0,8,1):
                                                 
@@ -448,7 +445,7 @@ def upload():
                                 except:
                                     if cD[sC]=='pass':
                                         d_dic[cA] = 'Thru'
-                            # app.logger.info('d_dic[insurerNo_Str][0:4]={}'.format(d_dic['insurerNo_Str'][0:4]))
+                            # app.logger.info('d_dic[insurer_No_Str][0:4]={}'.format(d_dic['insurer_No_Str'][0:4]))
                             define_soukatsu1Desti(d_dic)
                             
                             # ↓ valFalに一つでも'False'文字列が入っていれば、
@@ -727,6 +724,6 @@ if __name__=='__main__':
     app.debug = True
 
     # ↓　サーバーにデプロイして公開するためのもの
-    app.run(host='0.0.0.0')
+    ###app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    ###app.run(host='localhost')
+    app.run(host='localhost')
