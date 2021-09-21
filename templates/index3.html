@@ -395,7 +395,8 @@ Index
             <template v-for="item in insurerdataList">
               <!-- ↓検索条件　文字列に'健康保険組合'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
               <!-- ↓検索条件　文字列の先頭に'6'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('健康保険組合') && item['insurer_No_Str'].startsWith('6')">
+              <template v-if="item['kanji_Insurer_Name'].includes('健康保険組合') && item['insurer_No_Str'].startsWith('6') && 
+              !item['kanji_Insurer_Name'].includes('国民健康保険組合') ">
                 <!-- ↓　組合保険は　0 始まりなので、保険者番号の先頭に 0 を付け足しておく -->
                 <tr><td>{{item['kanji_Insurer_Name']}}</td><td>0{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
                 </tr>
