@@ -198,8 +198,10 @@ def get_by_list(arr):
         #　↓　保険者番号一覧　での備考（'info'項目）が、
         #空欄だった場合、あえて空文字''を入れておいて、
         #一覧表にNoneと表示されないようにする
-        if eachres['info'] == 'None':
-            eachres['info']=''
+        if 'info' in eachres:
+            if eachres['info'] == 'None':
+                eachres['info']=''
+            
         #print('res={}'.format(res)) 
     return res 
 
