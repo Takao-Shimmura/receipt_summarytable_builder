@@ -154,7 +154,7 @@ def get_dic_schCond2calAttr():
     return{
         'insurerNoLast_Cell':'insurer_No_Str',
         'insuraCodeNo_Cell':'insuraCodeNo_Str',
-        'name_Cell':'name',
+        'name_Cell':'name_nospace',
         'nameKana_Cell':'nameKana',
         'amount_Cell':'amount_Str',  
         'copayment_Cell':'copayment_Str',  
@@ -212,26 +212,12 @@ def get_cellno_2list(cellint):
     return [int(str) for str in li2]
 
 # nameから、'姓 名'という文字列を、
-# [姓,名]というリストに変換する
-def get_name_split_space(name1):
-    if '  ' in name1: #半角スペース2つの場合
-        li2=name1.split('  ')
-        return [str for str in li2]
-    elif '　　' in name1: #全角スペース2つの場合
-        li2=name1.split('　　')
-        return [str for str in li2]
-    elif '　 ' in name1: #全角スペース＋半角スペースの場合
-        li2=name1.split('　 ')
-        return [str for str in li2]
-    elif ' 　' in name1: #半角スペース＋全角スペースの場合
-        li2=name1.split(' 　')
-        return [str for str in li2]
-    elif '　' in name1: #全角スペース1つの場合
-        li2=name1.split('　')
-        return [str for str in li2]
-    elif ' ' in name1: #半角スペース1つの場合
-        li2=name1.split(' ')
-        return [str for str in li2]
+# '姓名'というスペースなしの文字列に変換する
+def name_delite_space(name1):
+    n1=name1.replace(' ', '') #半角スペースの場合
+    n2=n1.replace('　', '') #全角スペースの場合
+    return n2
+    
     
 
 def define_soukatsu1Desti(dic1):
@@ -427,7 +413,7 @@ def error_Msg_Sheet(err_obj,errKentan_obj,wb2):
             for l4 in err_obj:
                 list4=[]
                 list4.append('★読み込みができなかったシート：　【'+l4['sheetName']+'】')
-                if l4['name']=='False'or l4['name']== '0':
+                if l4['name_nospace']=='False'or l4['name_nospace']== '0':
                     list4.append([1,'「療養を受けた者の氏名」の記入漏れ'])
                 if l4['nameKana']== 'False' or l4['nameKana']== '0':
                     list4.append([2,'「療養を受けた者の氏名」(フリガナ))の記入漏れ'])
@@ -466,7 +452,7 @@ def error_Msg_Sheet(err_obj,errKentan_obj,wb2):
             for l7 in errKentan_obj:
                 list4=[]
                 list4.append('★読み込みができなかったシート：　【'+l7['sheetName']+'】')
-                if l7['name']=='False'or l7['name']== '0':
+                if l7['name_nospace']=='False'or l7['name_nospace']== '0':
                     list4.append([15,'【県単】「受給者氏名」の記入漏れ'])
                 if l7['amount_Str']=='False' :
                     list4.append([16,'【県単】「合計」金額の記入漏れ'])
@@ -474,6 +460,8 @@ def error_Msg_Sheet(err_obj,errKentan_obj,wb2):
                     list4.append([17,'【県単】冒頭の申請「年」、診療月の「年」2か所 のいずれかの記入漏れもしくは記入ミス'])
                 if l7['month_Str']== 'False':
                     list4.append([18,'【県単】冒頭の申請「月」、診療月の「月」2か所 のいずれかの記入漏れもしくは記入ミス'])
+                if l7['amount_Str']=='NotFound' :
+                    list4.append([19,'【県単】同じ患者の療養費支給申請書が見当たらない'])
                 list4.append(['',''])
                 alt_data.append(list4)
             # ↓　第２引数で用いているlen(wb1.sheetnames)は、全シート枚数。
@@ -518,7 +506,7 @@ def koukikourei_No_Sort(ldD_obj,wb1):
     # ちなみに、ldD_objはCulculateテーブルから引っ張り出したデータ（辞書inリスト）
     for l3 in ldD_obj:
         if '後期高齢者医療広域連合' in l3['kanji_Insurer_Name']:
-            list3.append([l3['kanji_Insurer_Name'],l3['title_AcupOrMass'],l3['insuraCodeNo_Str'],l3['name'],l3['sheetName']])
+            list3.append([l3['kanji_Insurer_Name'],l3['title_AcupOrMass'],l3['insuraCodeNo_Str'],l3['name_nospace'],l3['sheetName']])
     list3.sort()
     # ↓　第２引数で用いているlen(wb1.sheetnames)は、全シート枚数。
     # なので、「最末尾シートの後ろに、新たにシートを作成する」という意味

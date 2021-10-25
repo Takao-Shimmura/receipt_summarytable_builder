@@ -34,6 +34,8 @@ import os
 import pathlib
 import pytz
 import pprint
+import copy #　リストや辞書などのミュータブル（更新可能）オブジェクトをコピーする際に必要
+# ↑　参照　https://note.nkmk.me/python-copy-deepcopy/
 
 from sqlalchemy import create_engine, Column, Integer, String, \
     Text, DateTime, ForeignKey
@@ -48,7 +50,8 @@ from myutil3 import Search_condition,InsurerData,\
         soukatsu1Desti_List_set,get_soukatsu1Desti_insur_dic,\
         kensuu_insert,kingaku_insert,koukikourei_No_Sort,\
         error_Msg_Sheet,loadD_obj_furiwake_kenshikai,\
-        KentanD_obj_furiwake_kenshikai,get_insurerData_all
+        KentanD_obj_furiwake_kenshikai,get_insurerData_all,\
+        name_delite_space
 
 
 #　↓　herokuにデプロイすると、画像ファイルが読み込めない。
@@ -357,7 +360,7 @@ def upload():
                             for sC,cA in sC2cAdic.items():
                             # {sC:cA}の辞書は、search conditionとcalculate attributeの略。
                             #  get_dic_schCond2calAttr()関数で設定してある。
-                            # month,year,name,sheetname,title_AcupOrMass以外の項目を、
+                            # month,year,name_nospace,sheetname,title_AcupOrMass以外の項目を、
                             # 検索セルと項目のセットで辞書化したもの   
                                 try:
                                     # これから判定しなければならないdataframeの各セルのデータを以下の
@@ -434,7 +437,11 @@ def upload():
                                                 if str(int(float(cellV1)))=='0':
                                                     d_dic[cA] = 'False'  
                                             except:
-                                                d_dic[cA] = 'False'   
+                                                d_dic[cA] = 'False'  
+                                        # 患者氏名（'name_nospace' ）ならば、
+                                        # セルの値からスペースを削除して 入力する
+                                        elif 'name_nospace' in cA:
+                                            d_dic[cA] =name_delite_space(cellV1)
 
                                         # 上記以外ならば、素直にセルの値が入る。
                                         else:
@@ -519,10 +526,11 @@ def upload():
                                 """ wsh_id_4calc += 1 """
                                 loadD_obj.append(d_dic)
 
-
-            # ---------ここまでで、 df_new[session['user_access_time']]から
+            #--------------------------------------------------------------------
+            #ここまでで、 df_new[session['user_access_time']]から
             # loadD_obj、ErrD_obj、KentanD_obj、ErrKentanD_objへの書き込みが
-            # 終わっている状態--------------------------------------------------
+            # すべて終わっている状態
+            #--------------------------------------------------------------------
 
             # ↓　kentanDialogが一度も開かれていない状態で、なおかつ
             # KentanD_objに何か値が入っている・・・つまり県単の書類が存在する場合、
@@ -541,8 +549,60 @@ def upload():
 
 
         parsonal_data['process_msg']='総括票　作成中・・・' 
+        #--------------------------------------------------------------------
+        # 新潟県師会の総括表に県障の金額を入れ込む際に、
+        # 同じ患者の療養費支給申請書から「一部負担金」の金額を持ってきて、
+        # 'amount_Str'の値に入れ込む　というセクション
+        #--------------------------------------------------------------------
+        # ↓　いったん、KentanD_objやErrKentanD_objを別のオブジェクトとして
+        # 変数KentanD_obj_kariやErrKentanD_obj_kariにコピーする。
+        # 単純に　KentanD_obj_kari=KentanD_obj　等としてしまいがちだが、
+        # リストや辞書などのミュータブル（更新可能）オブジェクトが
+        # 代入された変数を、さらに別の変数に代入した場合、いずれかの変数を
+        # 更新（要素の変更や追加・削除など）すると他方も更新される・・・という
+        # 問題を回避するため、深いコピーcopy.deepcopyを使って、多次元リストを
+        # コピーする。そのためには　import copy　も必要なことをお忘れなく。
+        # 参照⇒https://note.nkmk.me/python-copy-deepcopy/
 
-        
+        KentanD_obj_kari=copy.deepcopy(KentanD_obj)
+        ErrKentanD_obj_kari=copy.deepcopy(ErrKentanD_obj)
+
+        for KentanD in KentanD_obj:
+            #app.logger.info('KentanD_obj={}'.format(KentanD_obj)) 
+            #app.logger.info('name_nospace_KentanD={}'.format(KentanD['name_nospace'])) 
+            kentanFlg=True
+            for loadD in loadD_obj:
+                #　↓　loadD['name_nospace']に一致するKentanDがあった場合、
+                # 　KentanD['amount_Str']にloadD['copayment_Str'] をぶち込む
+                if loadD['name_nospace']==KentanD['name_nospace']:
+                    kentanFlg=False
+                    #KentanD['amount_Str']=loadD['copayment_Str']
+                    # ↓　このコピーが無いと、↑が新潟県師会の総括票にに反映されないままになる
+                    for kari in KentanD_obj_kari:
+                        if kari['name_nospace']==KentanD['name_nospace']:
+                            kari['amount_Str']=loadD['copayment_Str']
+            #　↓　loadD['name_nospace']に一致するKentanDが無かった場合
+            # つまり、県単の申請書は存在したが、それと同名患者の療養費の申請書が無かった場合
+            if kentanFlg:
+                # ↓　先にKentanDをKentanD_obj_kari.から削除する
+                # （中身を書き換えた後だと、removeで検索できずエラーが生じる）
+                KentanD_obj_kari.remove(KentanD)
+                    #　↓　合計額に'NotFound'を差し替えて、後に
+                    # myutil3.py のerror_Msg_Sheet()にて処理してもらう
+                KentanD['amount_Str']='NotFound'
+                #　↓　KentanDをErrKentanD_obj_kariに加える
+                #app.logger.info('name_nospace_KentanD_beforeCHANGE={}'.format(KentanD_obj)) 
+                ErrKentanD_obj_kari.append(KentanD)
+                #app.logger.info('name_nospace_KentanD_midCHANGE={}'.format(KentanD_obj)) 
+                
+                #app.logger.info('KentanD_obj_after1={}'.format(KentanD_obj))
+                #app.logger.info('KentanD_obj_after2={}'.format(KentanD_obj))
+        KentanD_obj=copy.deepcopy(KentanD_obj_kari)
+        ErrKentanD_obj=copy.deepcopy(ErrKentanD_obj_kari)      
+
+        #--------------------------------------------------------------------
+                
+                
         #　↓　ブックの複製　参照⇒https://neko-py.com/python-excel-write-book
         wb = openpyxl.load_workbook(filename='soukatsuTemp.xlsx')
         #　↓　日付や時間の取得　参照⇒https://www.sejuku.net/blog/23606

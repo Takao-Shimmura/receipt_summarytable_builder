@@ -33,7 +33,7 @@ Index
     <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
     <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <p class="h6 text-right" >最終更新日　2021 09 30</p>
+  <p class="h6 text-right" >最終更新日　2021/10/25</p>
     <!-- 切り替えタブ部分 -->
   <ul class="nav nav-tabs" role="tablist">
     <!-- １つ目のタブ -->
@@ -54,7 +54,7 @@ Index
     <!-- ４つ目のタブ -->
     <li class="nav-item">
       <a class="nav-link"  href="#fourth"
-          data-toggle="tab" role="tab" >登録済み保険番号</a>
+          data-toggle="tab" role="tab" >登録済み保険者</a>
     </li>
     <!-- ５つ目のタブ -->
     <li class="nav-item">
@@ -66,8 +66,10 @@ Index
   <div class="tab-content"><!-- タブコンテンツの開始 -->
       <!-- １つ目のコンテンツ -->
     <div class="tab-pane fade show active" id="top" role="tabpanel">
-      
+      <br>
+      <div class="alert alert-primary">
         <label>{{title_msg}}</label>
+      </div>
         <hr/>
         <template v-if="formCloseFlg=='False'">
           <div class="form-group"><!-- 上記問題となった1行目　<form>では×バツ -->
@@ -310,8 +312,14 @@ Index
   </div><!-- ２つ目のコンテンツ 終了-->
   <!-- ３つ目のコンテンツ -->
   <div class="tab-pane fade" id="third" role="tabpanel">
-    ※更新履歴<br><br>
+    <br>
     <div class="alert alert-primary">
+      更新履歴<br>
+    </div>
+      2021/10/25　「登録済み保険者」を整理
+      <br>
+      ／新潟県師会の総括票に表示される「県単」の金額の修正
+      <br>
       2021/09/30　「送信失敗」となってしまう不具合を解消
       <br>
       2021/09/20　「登録済み保険番号」を追加
@@ -321,14 +329,21 @@ Index
       2021/09/14　「使い方」動画を追加
       <br>
       2021/09/09　県単（県障）の集計機能を追加
-    </div>
+    
   </div><!-- ３つ目のコンテンツ 終了-->
     <!-- ４つ目のコンテンツ -->
   <div class="tab-pane fade" id="fourth" role="tabpanel">
-  
-    <div class="alert alert-primary h4 mb-4">
-      登録済み　保険者番号　一覧
+    <br>
+    <div class="alert alert-primary">
+      登録済み保険者　一覧
     </div>
+    <br>
+    　※注意１　下記はいずれも「申請実績のある保険者」です
+    <br>
+    　※注意２「下記に記述がない保険者」が受療委任を認めているかどうかは、
+    <br>
+    　直接新潟県鍼灸マッサージ師会にお問い合わせください
+    <br>
     <div class="container mb-5">
       
       <div class="row">
@@ -593,10 +608,11 @@ Index
   </div><!-- ４つ目のコンテンツ 終了-->
     <!-- ５つ目のコンテンツ -->
   <div class="tab-pane fade" id="fifth" role="tabpanel">
-    ※お問い合わせのページ<br><br>
+    <br>
     <div class="alert alert-primary">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSck4xcocnS7kUdR5hZJQ5M4UoT--fE9RYsKP2veevWHys_M6g/viewform?usp=sf_link">仮設のお問い合わせフォームへ</a>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSck4xcocnS7kUdR5hZJQ5M4UoT--fE9RYsKP2veevWHys_M6g/viewform?usp=sf_link">⇒仮設のお問い合わせフォームへ</a>
     </div>
+
   </div><!-- ５つ目のコンテンツ 終了-->
 </div><!-- タブコンテンツ 全体の終了-->
 </div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
