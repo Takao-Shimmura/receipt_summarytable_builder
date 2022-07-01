@@ -95,7 +95,7 @@ def index():
         +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' \
              + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2)+'秒' \
                 +str(now.microsecond)+'マイクロ秒'
-    d=get_insurerData_all()
+    d = get_insurerData_all()
     # ↑　get_insurerData_all() 保険者番号一覧をゲット
     return render_template('index3.html',\
             title = '新潟県鍼灸マッサージ師会　公認',\
@@ -716,7 +716,7 @@ def upload():
         template_sheet = wb['総括表　新潟県師会用（禁削除）']            
         target_sheet = wb.copy_worksheet(template_sheet)
         target_sheet.sheet_properties.tabColor =None
-        target_sheet.title = '総括表　新潟県師会用('+str(date.month).zfill(2)+'月' +str(date.day).zfill(2) +'日'+ str(date.hour).zfill(2)+'時' + str(date.minute).zfill(2) +'分 作成'+')' 
+        target_sheet.title = '総括表　新潟県師会用('+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分 作成'+')' 
         target_sheet.cell(2, 2).value = year_f #年
         target_sheet.cell(2, 4).value = month_f #月
         target_sheet.cell(3, 5).value = therapistName_f #施術管理者

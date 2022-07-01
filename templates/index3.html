@@ -896,6 +896,8 @@ Vue.component('mycomp', {
         //errOpenFlg='True'となったタイミングで・・・つまりError messageページを
         //表示するタイミングで、HTMLが作成完了するのを待って、tooltipの作成に入る
         //そうしないと、for文を用いて作るリストの「tooltip」がうまく作成できない。
+        //そこで、nextTick()というHTMLが作成された後に実行されるメソッド
+        //（一種のコールバック関数）を用いる。
         //参照⇒https://blog.capilano-fw.com/?p=4773
                   $('[data-toggle="tooltip"]').tooltip({
                   
