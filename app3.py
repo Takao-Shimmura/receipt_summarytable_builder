@@ -716,6 +716,7 @@ def upload():
         template_sheet = wb['総括表　新潟県師会用（禁削除）']            
         target_sheet = wb.copy_worksheet(template_sheet)
         target_sheet.sheet_properties.tabColor =None
+        now = datetime.now(pytz.timezone('Asia/Tokyo'))
         target_sheet.title = '総括表　新潟県師会用('+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分 作成'+')' 
         target_sheet.cell(2, 2).value = year_f #年
         target_sheet.cell(2, 4).value = month_f #月
