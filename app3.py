@@ -716,7 +716,11 @@ def upload():
         template_sheet = wb['総括表　新潟県師会用（禁削除）']            
         target_sheet = wb.copy_worksheet(template_sheet)
         target_sheet.sheet_properties.tabColor =None
+        # ↓　.xlsxファイルが作成された年月日と時刻を、日本時間で取得
+        # （サーバーのおかれている国によって、時刻が変動しないように）
+        # 参考⇒https://qiita.com/keisuke0508/items/df2594770d63bf124ccd
         now = datetime.now(pytz.timezone('Asia/Tokyo'))
+
         target_sheet.title = '総括表　新潟県師会用('+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分 作成'+')' 
         target_sheet.cell(2, 2).value = year_f #年
         target_sheet.cell(2, 4).value = month_f #月
@@ -734,10 +738,7 @@ def upload():
         #app.logger.info('parsonal_data[alert_data] ={}'.format(parsonal_data['alert_data'] ))  
         #app.logger.info('dicDesti_insur={}'.format(dicDesti_insur))
 
-        # ↓　.xlsxファイルが作成された年月日と時刻を、日本時間で取得
-        # （サーバーのおかれている国によって、時刻が変動しないように）
-        # 参考⇒https://qiita.com/keisuke0508/items/df2594770d63bf124ccd
-        now = datetime.now(pytz.timezone('Asia/Tokyo'))
+        
         # ↓　作成された.xlsxファイルに、作成年月日でファイル名を命名する
         # ↓　時刻の2桁表示（ゼロ埋め）は.zfill()で行う
         # 参考⇒https://note.nkmk.me/python-zero-padding/
