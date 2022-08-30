@@ -556,6 +556,9 @@ def koukikourei_No_Sort(ldD_obj,wb1):
     #pprint.pprint('list3={}'.format(list3)) 
     return
 
+ # ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数（myutil3内で定義）
+# して、文字列⇒float浮動小数点に変換された数値を、小数点以下を四捨五入して、
+# さらにint関数によって整数化している。（20220830修正）
 def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
     for loadD in loadD_obj:
             #app.logger.info('insurer_No_Str={}'.format(loadD['kanji_Insurer_Name']+loadD['insurer_No_Str'][0:1]))
