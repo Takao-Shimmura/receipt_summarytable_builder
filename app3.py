@@ -433,7 +433,7 @@ def upload():
                                         elif 'amount_Str' in cA or 'copayment_Str' in cA \
                                             or 'billingAmount_Str' in cA :
                                             try:
-                                                d_dic[cA] = str(int(float(cellV1)))
+                                                d_dic[cA] = str(int(my_round(float(cellV1))))
                                                 if str(int(float(cellV1)))=='0':
                                                     d_dic[cA] = 'False'  
                                             except:
