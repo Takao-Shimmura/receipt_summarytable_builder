@@ -564,52 +564,52 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
                     target_sheet_cell1=target_sheet.cell(7, 2)#協会けんぽのはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(7, 4)#協会けんぽのはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(7, 6)#協会けんぽのマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(7, 7)#協会けんぽのマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif '共済' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(9, 2)#共済のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(9, 4)#共済のはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(9, 6)#共済のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(9, 7)#共済のマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif '国民健康保険組合' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(10, 2)#国保組合のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(10, 4)#国保組合のはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(10, 6)#国保組合のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(10, 7)#国保組合のマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif '保険組合' in loadD['kanji_Insurer_Name'] :
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(8, 2)#保険組合のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(8, 4)#保険組合のはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(8, 6)#保険組合のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(8, 7)#保険組合のマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             #保険者番号が6桁もしくは、山形県のように5桁の場合、
             # あるいは67から始まる退職者医療の場合⇒国保へ分類される
@@ -621,26 +621,26 @@ def loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet):
                     target_sheet_cell1=target_sheet.cell(12, 2)#国保のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(12, 4)#国保のはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(12, 6)#国保のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(12, 7)#国保のマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
             elif loadD['insurer_No_Str'][0:2] == '39':
                 if loadD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(13, 2)#後期高齢のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(13, 4)#後期高齢のはりきゅうの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
                 elif loadD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(13, 6)#後期高齢のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(13, 7)#後期高齢のマッサージの費用額を入れるセル
-                    loadDInt = int(float(loadD['amount_Str']))#費用額
+                    loadDInt = int(my_round(float(loadD['amount_Str'])))#費用額
                     kingaku_insert(loadDInt,target_sheet_cell2)
 
 def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
@@ -651,39 +651,39 @@ def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
                     target_sheet_cell1=target_sheet.cell(26, 2)#県障のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(26, 4)#県障のはりきゅうの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
                 elif kenD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(26, 6)#県障のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(26, 7)#県障のマッサージの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
             elif kenD['title_kentan'] =='県老' :
                 if kenD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(27, 2)#県老のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(27, 4)#県老のはりきゅうの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
                 elif kenD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(27, 6)#県老のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(27, 7)#県老のマッサージの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
             elif kenD['title_kentan'] =='県親' :
                 if kenD['title_AcupOrMass'] == 'はりきゅう':
                     target_sheet_cell1=target_sheet.cell(28, 2)#県親のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(28, 4)#県親のはりきゅうの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
                 elif kenD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(28, 6)#県親のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(28, 7)#県親のマッサージの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
             elif kenD['title_kentan'] =='単子' :
                 target_sheet.cell(29, 1).value='その他\n（子ども）'
@@ -691,13 +691,13 @@ def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
                     target_sheet_cell1=target_sheet.cell(29, 2)#単子のはりきゅうの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(29, 4)#単子のはりきゅうの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
                 elif kenD['title_AcupOrMass'] == 'マッサージ':
                     target_sheet_cell1=target_sheet.cell(29, 6)#単子のマッサージの件数を入れるセル
                     kensuu_insert(target_sheet_cell1)
                     target_sheet_cell2=target_sheet.cell(29, 7)#単子のマッサージの費用額を入れるセル
-                    kenDInt = int(float(kenD['amount_Str']))#費用額
+                    kenDInt = int(my_round(float(kenD['amount_Str'])))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
             
 # ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数を
