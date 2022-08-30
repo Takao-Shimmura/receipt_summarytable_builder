@@ -8,6 +8,7 @@ import sqlite3
 from datetime import datetime
 import pprint
 
+
 import os
 import pathlib
 
@@ -699,5 +700,10 @@ def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
                     kenDInt = int(float(kenD['amount_Str']))#費用額
                     kingaku_insert(kenDInt,target_sheet_cell2)
             
-
-
+# ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数を
+# myutil3内で予め定義しておく
+# これにより、app3.py内で　文字列⇒float浮動小数点に変換された数値を、小数点以下を四捨五入して、
+# さらにint関数によって整数化している。（後藤さんの指摘により　20220830修正）
+def my_round(val, digit=0):
+    p = 10 ** digit
+    return (val * p * 2 + 1) // 2 / p

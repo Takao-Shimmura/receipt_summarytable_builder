@@ -51,7 +51,7 @@ from myutil3 import Search_condition,InsurerData,\
         kensuu_insert,kingaku_insert,koukikourei_No_Sort,\
         error_Msg_Sheet,loadD_obj_furiwake_kenshikai,\
         KentanD_obj_furiwake_kenshikai,get_insurerData_all,\
-        name_delite_space
+        name_delite_space,my_round
 
 
 #　↓　herokuにデプロイすると、画像ファイルが読み込めない。
@@ -654,6 +654,11 @@ def upload():
                         # ↓ 複製したシート（総括表１）に、保険者名＋改行＋（はりきゅうorマッサージ）
                         # を、上から順にｖ番目まで入れていく
                         # （数列v+7*xを用いて、コピーがx枚目のときは、1枚目の続きの保険者が入るようにしてある）
+                        
+                        # ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数（myutil3内で定義）
+                        # して、文字列⇒float浮動小数点に変換された数値を、小数点以下を四捨五入して、
+                        # さらにint関数によって整数化している。（20220830修正）
+
                         v=0
                         for v in range(y):
                             listv = dicDesti_insur[desti]
@@ -666,13 +671,13 @@ def upload():
                                         target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
                                         kensuu_insert(target_sheet_cell1)
                                         target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
-                                        loadDInt = int(float(loadD['amount_Str']))#本人の費用額
+                                        loadDInt = int(my_round(float(loadD['amount_Str'])))#本人の費用額
                                         kingaku_insert(loadDInt,target_sheet_cell2)
                                     else:
                                         target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
                                         kensuu_insert(target_sheet_cell1)
                                         target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
-                                        loadDInt = int(float(loadD['amount_Str']))#家族の費用額
+                                        loadDInt = int(my_round(float(loadD['amount_Str'])))#家族の費用額
                                         kingaku_insert(loadDInt,target_sheet_cell2)
         template_sheet = wb['総括票（Ⅱ）(ひな形　禁削除)']            
         for insurL in sortInsList:
@@ -692,25 +697,25 @@ def upload():
                         target_sheet_cell1=target_sheet.cell(35, 13)#本人の件数を入れるセル
                         kensuu_insert(target_sheet_cell1)
                         target_sheet_cell2=target_sheet.cell(35, 24)#本人の費用額を入れるセル
-                        loadDInt = int(float(loadD['amount_Str']))#本人の費用額
+                        loadDInt = int(my_round(float(loadD['amount_Str'])))#本人の費用額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(35, 39)#本人の一部負担金額を入れるセル
-                        loadDInt = int(float(loadD['copayment_Str']))#本人の一部負担金額
+                        loadDInt = int(my_round(float(loadD['copayment_Str'])))#本人の一部負担金額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(35, 54)#本人の請求額を入れるセル
-                        loadDInt = int(float(loadD['billingAmount_Str']))#本人の請求額
+                        loadDInt = int(my_round(float(loadD['billingAmount_Str'])))#本人の請求額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                     else:
                         target_sheet_cell1=target_sheet.cell(41, 13)#家族の件数を入れるセル
                         kensuu_insert(target_sheet_cell1)
                         target_sheet_cell2=target_sheet.cell(41, 24)#家族の費用額を入れるセル
-                        loadDInt = int(float(loadD['amount_Str']))#家族の費用額
+                        loadDInt = int(my_round(float(loadD['amount_Str'])))#家族の費用額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(41, 39)#家族の一部負担金額を入れるセル
-                        loadDInt = int(float(loadD['copayment_Str']))#家族の一部負担金額
+                        loadDInt = int(my_round(float(loadD['copayment_Str'])))#家族の一部負担金額
                         kingaku_insert(loadDInt,target_sheet_cell2)
                         target_sheet_cell2=target_sheet.cell(41, 54)#家族の請求額を入れるセル
-                        loadDInt = int(float(loadD['billingAmount_Str']))#家族の請求額
+                        loadDInt = int(my_round(float(loadD['billingAmount_Str'])))#家族の請求額
                         kingaku_insert(loadDInt,target_sheet_cell2)
         
         template_sheet = wb['総括表　新潟県師会用（禁削除）']            
