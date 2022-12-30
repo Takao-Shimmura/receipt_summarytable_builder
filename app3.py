@@ -10,12 +10,12 @@
 #     ●calculate/error_msgテーブルを廃止して、変数に込める
 #    などの対策を講じた。
 # 　
-#　2⃣構成ファイルはapp.py--index2.html--myutil2.py。
+#　2⃣構成ファイルはapp3.py--index2.html--myutil2.py。
 #       なお、calculate/error_msgテーブルを用いる手法は後々参考になるので、
 #       apppandas.py--index.html--myutil.pyに残してある
 
-#　3⃣メインのプログラムはapp.pyなので、デプロイ前にProcfileを確認しておく。
-#       web: gunicorn app:app　の前の方のappがapp.pyのことを指す
+#　3⃣メインのプログラムはapp3.pyなので、デプロイ前にProcfileを確認しておく。
+#       web: gunicorn app3:app　の前の方のapp3がapp3.pyのことを指す
 
 #  4⃣ローカルで動く環境と、デプロイ時の環境で変えなきゃならないところは、
 #  ### で印をつけてある（データベースのURIと最後の行のlocalhost）
@@ -70,10 +70,11 @@ app.secret_key = b'random string...'
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
-engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
+###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
+
 
 #　↓　ローカルのSQLite接続用パス 
-###engine = create_engine('sqlite:///sample.sqlite3')
+engine = create_engine('sqlite:///sample.sqlite3')
 
 # access top page.
 @app.route('/',methods=['GET'])
