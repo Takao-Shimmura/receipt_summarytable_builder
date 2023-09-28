@@ -33,7 +33,7 @@ Index
     <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
     <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <p class="h6 text-right" >最終更新日　2022/8/30</p>
+  <p class="h6 text-right" >最終更新日　2023/9/29</p>
     <!-- 切り替えタブ部分 -->
   <ul class="nav nav-tabs" role="tablist">
     <!-- １つ目のタブ -->
@@ -316,6 +316,8 @@ Index
     <div class="alert alert-primary">
       更新履歴<br>
     </div>
+      2023/09/29　「登録済み保険者」において、「関東 ITソフトウェア健康保険組合」を追加
+      <br>
       2022/08/30　「総括票」の金額において、小数点以下が四捨五入されず、申請書の金額と異なってしまう不具合を解消
       <br>
       2021/10/25　「登録済み保険者」を整理
@@ -634,7 +636,7 @@ Index
 // 参考⇒https://ymgsapo.com/2019/10/12/pass-value-template/
 // ※注意事項としては、render_templateで送ってくるinsdataは
 // jsonifyしてはいけない！
-var d = eval({{insdata|tojson}})
+var d = eval({{insdata|tojson}});
 //insdataは、python側では、idの順番の辞書inリストになっているのだが、
 //render_template によって送信されてくると、なぜだかidの順番がぐちゃぐちゃ
 //な連想配列になってしまう。よってidの順番に直す
