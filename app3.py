@@ -201,6 +201,9 @@ def upload():
         # どういうわけか、ajax通信で送られてきたものは、すべてstring型になってしまうらしい
         year_f = request.form.get('year_fixed')
         month_f = request.form.get('month_fixed')
+        kenshikai_year_f = request.form.get('kenshikai_year_fixed')
+        kenshikai_month_f = request.form.get('kenshikai_month_fixed')
+        #pprint.pprint('kenshikai_month_f{}'.format(kenshikai_month_f))    
         therapistName_f = request.form.get('therapistName_fixed')
         treatmentHosName_f = request.form.get('treatmentHosName_fixed')
         registerNo_Str_f = request.form.get('registerNo_Str_fixed')
@@ -728,8 +731,8 @@ def upload():
         now = datetime.now(pytz.timezone('Asia/Tokyo'))
 
         target_sheet.title = '総括表　新潟県師会用('+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分 作成'+')' 
-        target_sheet.cell(2, 2).value = year_f #年
-        target_sheet.cell(2, 4).value = month_f #月
+        target_sheet.cell(2, 2).value = kenshikai_year_f #年
+        target_sheet.cell(2, 4).value = kenshikai_month_f #月
         target_sheet.cell(3, 5).value = therapistName_f #施術管理者
         
         loadD_obj_furiwake_kenshikai(loadD_obj,target_sheet)
