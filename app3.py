@@ -267,6 +267,8 @@ def upload():
                         #　・・・が成り立つ時だけ、読み込むように変更した。
                         if df_value.shape[1] >= get_cellno_2list(cD['acupOrMass_Cell'])[1]:
                             # ↓　検索条件となるacupOrMass_Cell　のセル位置に　acupOrMass_Condition　に相当する値が入っているかどうかを判定している
+                            # df_value.loc[?,?] (DataFrame.loc[?,?])は、下記を参照
+                            # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
                             if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
                                 get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
                                 #　↓　変数d_dicは辞書。後に一気にcalculateテーブルを更新するためのデータを入れとく
