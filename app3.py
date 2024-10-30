@@ -208,6 +208,7 @@ def upload():
         treatmentHosName_f = request.form.get('treatmentHosName_fixed')
         registerNo_Str_f = request.form.get('registerNo_Str_fixed')
         df_new2_f = request.form.get('df_new2')
+        #pprint.pprint('df_new2_f{}'.format(df_new2_f))    
         # ↑　df_new2_fは、一時的にフロントエンド側（index2）に送っておいた
         # dataframeの内容が、返却されてきたもの。
         # 2重にjson化されているので、それぞれjsonファイルを読み込み、
@@ -224,7 +225,7 @@ def upload():
             df_new2=json.loads(df_new2_f)
             for k, v in df_new2.items():
                 df_new[session['user_access_time']][k]=pd.read_json(v)
-        #app.logger.info('df_new after={}'.format(df_new)) 
+        # app.logger.info('df_new after={}'.format(df_new)) 
         """ wsh_id_4calc = 1 # loadD_objに乗せるデータのidをリセット
         wsh_id_4err = 1 # ErrD_objに乗せるデータのidをリセット
         wsh_id_4ken = 1 # 県単に乗せるデータのidをリセット
@@ -247,288 +248,302 @@ def upload():
             ErrKentanD_obj=json.loads(request.form.get('kentanErrData'))
         else:
             for cD in condDict:
-                for dfN_Key in df_new[session['user_access_time']]:#dfN_Keyはシート名
+                for dfN_Key in df_new[session['user_access_time']]:# dfN_Keyはシート名
                     df_value=df_new[session['user_access_time']][dfN_Key]#df_valueに1シート分のdataframeを入れておく。
                     # ↓　DataFrameがある大きさを越えないと、読み込まないようにしておく（はorマ　の申請用紙以外のDataFrameを読み込まない）
+                    # df_value.shape[0] (DataFrame.shape[0])は、1シート分のデータフレームの最大行。
+                    # df_value.shape[1] (DataFrame.shape[1])は、1シート分のデータフレームの最大列。
+                    #　参照　https://note.nkmk.me/python-pandas-len-shape-size/
                     # df_value.shape[0] >= 78 は県障（新潟市内）、df_value.shape[1] >=68 は県障（新潟市外）
                     if df_value.shape[0] >= 78 and df_value.shape[1] >= 68 : 
-                        if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
-                            get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
-                            #　↓　変数d_dicは辞書。後に一気にcalculateテーブルを更新するためのデータを入れとく
-                            d_dic={}
-                            d_dic['sheetName'] =dfN_Key # シート名を入れておく
-                            
-                            if cD['acupOrMass_Condition']=='県単医療費助成申請書' :
-                                d_dic['title_kentan'] ='県障'
-                                d_dic['kankatsu_kentan'] ='新潟県'
-                            elif cD['acupOrMass_Condition']=='重度心身障がい者医療費助成申請書':
-                                d_dic['title_kentan'] ='県障'
-                                d_dic['kankatsu_kentan'] ='新潟市'
-                            else:
-                                d_dic['title_kentan'] ='Not県障'
-                            d_dic['title_AcupOrMass'] =cD['title_AcupOrMass']
-                            # ↑　はきorマを入れておく
-                            # ↑　県単の場合は''空欄を入れておいて、
-                            # 後にkentanダイアログにて　「県老/県障/県親/単子_はき/マ」　を入れてもらう
-                            
-                            # ↓「年」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
-                            #nanだったときには'False'
-                            if not pd.isnull(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                get_cellno_2list(cD['yearTop_Cell'])[1]] ) and \
-                                not pd.isnull(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
-                                get_cellno_2list(cD['year1st_Cell'])[1]]) and\
-                                not pd.isnull(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
-                                get_cellno_2list(cD['yearLast_Cell'])[1]]):
+                        # ↓　2024年10月30日修正
+                        # ↓　DataFrameの外枠よりも行数が多いところをacupOrMass_Cellで検索しようとすると、pandasのエラーがでて、
+                        #　全体が止まって読み込みがストップするエラーが出る。
+                        # 具体例として、2024年10月~の新しい申請書ではCell(5,101)に相当するところのDataFrameデータに、
+                        # 'acupOrMass_Condition'（はりきゅう用）／（あんま・マッサージ用）／県障と入力されているか否かを基準として、
+                        # 　このシートが申請書なのかどうかを認識する。
+                        # 　しかし、最大72行しかない旧申請書や、最大68行しかない県障のシートでは、101行目のセルを検索しようとしてもエラーが出る
+                        #　それを回避するために、df_value.shape[1] ⇒シートの最大行　＞＝　get_cellno_2list(cD['acupOrMass_Cell'])[1]⇒101行
+                        #　・・・が成り立つ時だけ、読み込むように変更した。
+                        if df_value.shape[1] >= get_cellno_2list(cD['acupOrMass_Cell'])[1]:
+                            # ↓　検索条件となるacupOrMass_Cell　のセル位置に　acupOrMass_Condition　に相当する値が入っているかどうかを判定している
+                            if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
+                                get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
+                                #　↓　変数d_dicは辞書。後に一気にcalculateテーブルを更新するためのデータを入れとく
+                                d_dic={}
+                                d_dic['sheetName'] =dfN_Key # シート名を入れておく
+                                
+                                if cD['acupOrMass_Condition']=='県単医療費助成申請書' :
+                                    d_dic['title_kentan'] ='県障'
+                                    d_dic['kankatsu_kentan'] ='新潟県'
+                                elif cD['acupOrMass_Condition']=='重度心身障がい者医療費助成申請書':
+                                    d_dic['title_kentan'] ='県障'
+                                    d_dic['kankatsu_kentan'] ='新潟市'
+                                else:
+                                    d_dic['title_kentan'] ='Not県障'
+                                d_dic['title_AcupOrMass'] =cD['title_AcupOrMass']
+                                # ↑　はきorマを入れておく
+                                # ↑　県単の場合は''空欄を入れておいて、
+                                # 後にkentanダイアログにて　「県老/県障/県親/単子_はき/マ」　を入れてもらう
+                                
+                                # ↓「年」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                                #nanだったときには'False'
+                                if not pd.isnull(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]] ) and \
+                                    not pd.isnull(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                                    get_cellno_2list(cD['year1st_Cell'])[1]]) and\
+                                    not pd.isnull(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                                    get_cellno_2list(cD['yearLast_Cell'])[1]]):
 
-                                # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
-                                # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
-                                if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                    get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
-                                    int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
-                                    get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
-                                    int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                    get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
-                                    int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
-                                    get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
-                                    int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                    get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
-                                # ↓「年」がyear month dialogで確認した数字とあっていなければ'False'を入力        
-                                    if flg1 !='False':
-                                        #app.logger.info('year_f={}'.format(year_f))
-                                        #app.logger.info('year={}'.format(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                        #get_cellno_2list(cD['yearTop_Cell'])[1]] ))
-                                        if int(year_f) ==\
+                                    # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                                    # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
+                                    if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                        get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
+                                        int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                                        get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
                                         int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                        get_cellno_2list(cD['yearTop_Cell'])[1]])) :
+                                        get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
+                                        int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                                        get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
+                                        int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                        get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
+                                    # ↓「年」がyear month dialogで確認した数字とあっていなければ'False'を入力        
+                                        if flg1 !='False':
+                                            #app.logger.info('year_f={}'.format(year_f))
+                                            #app.logger.info('year={}'.format(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                            #get_cellno_2list(cD['yearTop_Cell'])[1]] ))
+                                            if int(year_f) ==\
+                                            int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                            get_cellno_2list(cD['yearTop_Cell'])[1]])) :
+                                                d_dic['year_Str'] =\
+                                                str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                                get_cellno_2list(cD['yearTop_Cell'])[1]] )))
+                                            else:
+                                                d_dic['year_Str'] ='False'
+                                        else:
                                             d_dic['year_Str'] =\
                                             str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
                                             get_cellno_2list(cD['yearTop_Cell'])[1]] )))
-                                        else:
-                                            d_dic['year_Str'] ='False'
                                     else:
-                                        d_dic['year_Str'] =\
-                                        str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
-                                        get_cellno_2list(cD['yearTop_Cell'])[1]] )))
+                                        d_dic['year_Str'] ='False'
                                 else:
                                     d_dic['year_Str'] ='False'
-                            else:
-                                d_dic['year_Str'] ='False'
-                            # ↓「月」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
-                            #nanだったときには'False'
-                            if not pd.isnull(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                get_cellno_2list(cD['monthTop_Cell'])[1]] ) and \
-                                not pd.isnull(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
-                                get_cellno_2list(cD['month1st_Cell'])[1]]) and\
-                                not pd.isnull(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
-                                get_cellno_2list(cD['monthLast_Cell'])[1]]):    
-                                # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
-                                # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
-                                if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
-                                    int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
-                                    get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
-                                    int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                    get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
-                                    int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
-                                    get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
-                                    int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                    get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
-                                # ↓「月」がyear month dialogで確認した数字とあっていなければ'False'を入力    
-                                    if flg1 !='False':
-                                        if int(month_f) ==\
+                                # ↓「月」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                                #nanだったときには'False'
+                                if not pd.isnull(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]] ) and \
+                                    not pd.isnull(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                                    get_cellno_2list(cD['month1st_Cell'])[1]]) and\
+                                    not pd.isnull(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                                    get_cellno_2list(cD['monthLast_Cell'])[1]]):    
+                                    # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                                    # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
+                                    if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                        get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
+                                        int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                                        get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
                                         int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                        get_cellno_2list(cD['monthTop_Cell'])[1]] )):
+                                        get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
+                                        int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                                        get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
+                                        int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                        get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
+                                    # ↓「月」がyear month dialogで確認した数字とあっていなければ'False'を入力    
+                                        if flg1 !='False':
+                                            if int(month_f) ==\
+                                            int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                            get_cellno_2list(cD['monthTop_Cell'])[1]] )):
+                                                d_dic['month_Str'] =\
+                                                str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                                get_cellno_2list(cD['monthTop_Cell'])[1]] )))
+                                            else:
+                                                d_dic['month_Str'] ='False'
+                                        #str(int(float・・・とややこしい処理をしているのは、1⃣pandasで
+                                        #読み込む際に、数値を勝手に「浮動小数点：float」で読み込んで
+                                        # dataframe化されるがある（例「2」のはずが「2.0」と読み込む）
+                                        # そのために、2⃣そのデータがstrによって文字列化されてしまうと、
+                                        # (例「'2.0'」)3⃣それをさらに、intで整数化しようとするとエラーが出る
+                                        #参考⇒https://qiita.com/ringCurrent/items/1df058bb203374a4b294
+                                        #これらを回避するために、float関数を用いる
+
+
+                                        else:
                                             d_dic['month_Str'] =\
                                             str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
                                             get_cellno_2list(cD['monthTop_Cell'])[1]] )))
-                                        else:
-                                            d_dic['month_Str'] ='False'
-                                    #str(int(float・・・とややこしい処理をしているのは、1⃣pandasで
-                                    #読み込む際に、数値を勝手に「浮動小数点：float」で読み込んで
-                                    # dataframe化されるがある（例「2」のはずが「2.0」と読み込む）
-                                    # そのために、2⃣そのデータがstrによって文字列化されてしまうと、
-                                    # (例「'2.0'」)3⃣それをさらに、intで整数化しようとするとエラーが出る
-                                    #参考⇒https://qiita.com/ringCurrent/items/1df058bb203374a4b294
-                                    #これらを回避するために、float関数を用いる
-
-
                                     else:
-                                        d_dic['month_Str'] =\
-                                        str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
-                                        get_cellno_2list(cD['monthTop_Cell'])[1]] )))
+                                        d_dic['month_Str'] ='False'
                                 else:
                                     d_dic['month_Str'] ='False'
-                            else:
-                                d_dic['month_Str'] ='False'
 
-                            for sC,cA in sC2cAdic.items():
-                            # {sC:cA}の辞書は、search conditionとcalculate attributeの略。
-                            #  get_dic_schCond2calAttr()関数で設定してある。
-                            # month,year,name_nospace,sheetname,title_AcupOrMass以外の項目を、
-                            # 検索セルと項目のセットで辞書化したもの   
-                                try:
-                                    # これから判定しなければならないdataframeの各セルのデータを以下の
-                                    # cellV1に予め込めておく
-                                    cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                        get_cellno_2list(cD[sC])[1]]
-                                    # pandasで取得したdataFrameのなかで、欠損値である'nan'は扱いが難しく、
-                                    # if文で判定するためには、 if cA=='nan' や　if cA==str('nan')では
-                                    # 判定してくれない（しかも構文エラーにならないので、ややこしい）
-                                    #　判定するためにはif pd.isnull(?):とする
-                                    # （欠損値nanならば’true’／pdは　import pandas as pd　より）
-                                    # 参照⇒https://kagglenote.com/misc/pandas_nan_judge/
-                                    if not pd.isnull(cellV1) :
+                                for sC,cA in sC2cAdic.items():
+                                # {sC:cA}の辞書は、search conditionとcalculate attributeの略。
+                                #  get_dic_schCond2calAttr()関数で設定してある。
+                                # month,year,name_nospace,sheetname,title_AcupOrMass以外の項目を、
+                                # 検索セルと項目のセットで辞書化したもの   
+                                    try:
+                                        # これから判定しなければならないdataframeの各セルのデータを以下の
+                                        # cellV1に予め込めておく
+                                        cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                            get_cellno_2list(cD[sC])[1]]
+                                        # pandasで取得したdataFrameのなかで、欠損値である'nan'は扱いが難しく、
+                                        # if文で判定するためには、 if cA=='nan' や　if cA==str('nan')では
+                                        # 判定してくれない（しかも構文エラーにならないので、ややこしい）
+                                        #　判定するためにはif pd.isnull(?):とする
+                                        # （欠損値nanならば’true’／pdは　import pandas as pd　より）
+                                        # 参照⇒https://kagglenote.com/misc/pandas_nan_judge/
+                                        if not pd.isnull(cellV1) :
 
-                                        
-                                        # ↓　もしも、更新先のテーブルの「属性」に'insurer_No_Str'(保険者番号)という文字列
-                                        # が含まれていたら、'insurerNoLast_Cell'と'insurerNo_CellStep'を駆使して
-                                        # 保険者番号を抽出し、'insurer_No_Str'をキーとして
-                                        # 文字列として入れておく
-                                        if 'insurer_No_Str' in cA:
-                                            number = ''
-                                            for n in range(0,8,1):
-                                                
-                                                #  ↓　DataFrameの場合、値が入っていない場合は’nan’
-                                                #　判定はpd.isnull()
-                                                if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                                get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
-                                                    jj = ''
-                                                #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
-                                                # の場合もOK
-                                                # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
-                                                # str(int(float(によって、無理やり整数化と文字列化をする。
-                                                else:
-                                                    try:
-                                                        jj = str(int(float(df_value.loc[get_cellno_2list(cD[sC])[0],\
-                                                        get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']] )))
-                                                    #　↓　str(int(floatでエラーが出る場合は、「数値に変換できない文字列」が入っている場合
-                                                    # そういう場合は、numberに'False'を入れて、breakでfor文を
-                                                    # とっとと抜け出す
-                                                    except:
-                                                        number= 'False'
-                                                        break
-                                                number = jj + number
-                                            d_dic[cA] = number
-                                        # ↓　もしも、更新先のテーブルの「属性」が'therapistName'(施術者名)だったら
-                                        # なおかつyear month dialogで確認した施術者名と違っていたら'False'が入る
-                                        elif 'therapistName' in cA and flg1 !='False' and\
-                                            therapistName_f != cellV1 :
-                                                d_dic[cA] = 'False'
                                             
-                                        # ↓　もしも、更新先のテーブルの「属性」が'treatmentHosName'(施術所名)だったら
-                                        # なおかつyear month dialogで確認した施術所名と違っていたら'False'が入る
-                                        elif 'treatmentHosName' in cA and flg1 !='False' and\
-                                            treatmentHosName_f != cellV1 :
-                                                d_dic[cA] = 'False'
-                                        # ↓　もしも、更新先のテーブルの「属性」が'registerNo_Str'(登録記号番号)だったら
-                                        # なおかつyear month dialogで確認した登録記号番号と違っていたら'False'が入る
-                                        elif 'registerNo_Str' in cA and flg1 !='False' and\
-                                            registerNo_Str_f != cellV1 :
-                                                d_dic[cA] = 'False'
-                                        
-                                        # ↓　もしも、更新先のテーブルの「属性」が'amount_Str'(合計額)もしくは
-                                        # 'copayment_Str'(一部負担金額)もしくは'billingAmount_Str'(請求額)であり、
-                                        # なおかつyear_month Dialogを開き終わった後だったら・・・
-                                        # cellV1の値を文字列化したものをd_dic[cA] に入れてみようとする（try文）
-                                        # エラーが出る（cellV1が文字、もしくはnanだったら）exceptに飛んで、'False'が入る。
-                                        # うまくいったとしても、cellV1が文字列'0'だったら'False'が入る。
-                                        # for文から抜け出す　参考⇒https://note.nkmk.me/python-break-nested-loops/
-                                        # カッコと論理演算子　参考⇒https://dot-blog.jp/news/python-boolean-operations-bool/
-                                        elif 'amount_Str' in cA or 'copayment_Str' in cA \
-                                            or 'billingAmount_Str' in cA :
-                                            try:
-                                                d_dic[cA] = str(int(my_round(float(cellV1))))
-                                                if str(int(float(cellV1)))=='0':
+                                            # ↓　もしも、更新先のテーブルの「属性」に'insurer_No_Str'(保険者番号)という文字列
+                                            # が含まれていたら、'insurerNoLast_Cell'と'insurerNo_CellStep'を駆使して
+                                            # 保険者番号を抽出し、'insurer_No_Str'をキーとして
+                                            # 文字列として入れておく
+                                            if 'insurer_No_Str' in cA:
+                                                number = ''
+                                                for n in range(0,8,1):
+                                                    
+                                                    #  ↓　DataFrameの場合、値が入っていない場合は’nan’
+                                                    #　判定はpd.isnull()
+                                                    if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                                    get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
+                                                        jj = ''
+                                                    #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
+                                                    # の場合もOK
+                                                    # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
+                                                    # str(int(float(によって、無理やり整数化と文字列化をする。
+                                                    else:
+                                                        try:
+                                                            jj = str(int(float(df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                                            get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']] )))
+                                                        #　↓　str(int(floatでエラーが出る場合は、「数値に変換できない文字列」が入っている場合
+                                                        # そういう場合は、numberに'False'を入れて、breakでfor文を
+                                                        # とっとと抜け出す
+                                                        except:
+                                                            number= 'False'
+                                                            break
+                                                    number = jj + number
+                                                d_dic[cA] = number
+                                            # ↓　もしも、更新先のテーブルの「属性」が'therapistName'(施術者名)だったら
+                                            # なおかつyear month dialogで確認した施術者名と違っていたら'False'が入る
+                                            elif 'therapistName' in cA and flg1 !='False' and\
+                                                therapistName_f != cellV1 :
+                                                    d_dic[cA] = 'False'
+                                                
+                                            # ↓　もしも、更新先のテーブルの「属性」が'treatmentHosName'(施術所名)だったら
+                                            # なおかつyear month dialogで確認した施術所名と違っていたら'False'が入る
+                                            elif 'treatmentHosName' in cA and flg1 !='False' and\
+                                                treatmentHosName_f != cellV1 :
+                                                    d_dic[cA] = 'False'
+                                            # ↓　もしも、更新先のテーブルの「属性」が'registerNo_Str'(登録記号番号)だったら
+                                            # なおかつyear month dialogで確認した登録記号番号と違っていたら'False'が入る
+                                            elif 'registerNo_Str' in cA and flg1 !='False' and\
+                                                registerNo_Str_f != cellV1 :
+                                                    d_dic[cA] = 'False'
+                                            
+                                            # ↓　もしも、更新先のテーブルの「属性」が'amount_Str'(合計額)もしくは
+                                            # 'copayment_Str'(一部負担金額)もしくは'billingAmount_Str'(請求額)であり、
+                                            # なおかつyear_month Dialogを開き終わった後だったら・・・
+                                            # cellV1の値を文字列化したものをd_dic[cA] に入れてみようとする（try文）
+                                            # エラーが出る（cellV1が文字、もしくはnanだったら）exceptに飛んで、'False'が入る。
+                                            # うまくいったとしても、cellV1が文字列'0'だったら'False'が入る。
+                                            # for文から抜け出す　参考⇒https://note.nkmk.me/python-break-nested-loops/
+                                            # カッコと論理演算子　参考⇒https://dot-blog.jp/news/python-boolean-operations-bool/
+                                            elif 'amount_Str' in cA or 'copayment_Str' in cA \
+                                                or 'billingAmount_Str' in cA :
+                                                try:
+                                                    d_dic[cA] = str(int(my_round(float(cellV1))))
+                                                    if str(int(float(cellV1)))=='0':
+                                                        d_dic[cA] = 'False'  
+                                                except:
                                                     d_dic[cA] = 'False'  
-                                            except:
-                                                d_dic[cA] = 'False'  
-                                        # 患者氏名（'name_nospace' ）ならば、
-                                        # セルの値からスペースを削除して 入力する
-                                        elif 'name_nospace' in cA:
-                                            d_dic[cA] =name_delite_space(cellV1)
+                                            # 患者氏名（'name_nospace' ）ならば、
+                                            # セルの値からスペースを削除して 入力する
+                                            elif 'name_nospace' in cA:
+                                                d_dic[cA] =name_delite_space(cellV1)
 
-                                        # 上記以外ならば、素直にセルの値が入る。
+                                            # 上記以外ならば、素直にセルの値が入る。
+                                            else:
+                                                d_dic[cA] = cellV1
+                                        # 'nan'　つまり参照したセルが空白ならば'False'が入る。
                                         else:
-                                            d_dic[cA] = cellV1
-                                    # 'nan'　つまり参照したセルが空白ならば'False'が入る。
-                                    else:
-                                        d_dic[cA] = 'False'
-                                except:
-                                    if cD[sC]=='pass':
-                                        d_dic[cA] = 'Thru'
-                            # app.logger.info('d_dic[insurer_No_Str][0:4]={}'.format(d_dic['insurer_No_Str'][0:4]))
-                            define_soukatsu1Desti(d_dic)
-                            
-                            # ↓ valFalに一つでも'False'文字列が入っていれば、
-                            # 'error_msgテーブル'に更新され、
-                            # 'False'文字列が入っていなければ、'calculateテーブル'に更新される
-                            # ↓　for文のbreakやelseの使い方は 
-                            # 右を参照　https://python.civic-apps.com/else-loop/
-                            for valFal in d_dic.values():
-                                #　↓　県単のデータであることを示すものが、d_dicの値の中にあった場合
-                                if valFal=='Thru' or valFal=='県障' :
-                                    # ↓　もう一回、そのd_dicの値をfor文で洗いざらい調べて、
-                                    # 'False'があった場合には、ErrKentanD_obj　県単のエラーデータに収める
-                                    for valFal2 in d_dic.values():
-                                        #　↓　flg2 !='False'⇒県単のダイアログを表示した後の場合 
-                                        if valFal2=='False'and flg2 !='False':
-                                            """ d_dic['id'] =wsh_id_4kenErr
-                                            wsh_id_4kenErr += 1 """
-                                            ErrKentanD_obj.append(d_dic)
-                                            break
-                                    #　↓それ以外は、valFal2のfor文を抜け出して、KentanD_obj　県単のデータに収める
-                                    else:
-                                        """ d_dic['id'] =wsh_id_4ken
-                                        wsh_id_4ken += 1 """
-                                        KentanD_obj.append(d_dic)
-                                    break
-                                #　↓　県単以外で'False'などが見受けられたら、ErrD_objに収める
-                                elif valFal=='False'or pd.isnull(valFal) or valFal=='NotFound' or valFal=='0' or valFal=='00000000':
-                                    """ d_dic['id'] =wsh_id_4err
-                                    wsh_id_4err += 1 """
-                                    
-                                    ErrD_obj.append(d_dic)
+                                            d_dic[cA] = 'False'
+                                    except:
+                                        if cD[sC]=='pass':
+                                            d_dic[cA] = 'Thru'
+                                # app.logger.info('d_dic[insurer_No_Str][0:4]={}'.format(d_dic['insurer_No_Str'][0:4]))
+                                define_soukatsu1Desti(d_dic)
+                                
+                                # ↓ valFalに一つでも'False'文字列が入っていれば、
+                                # 'error_msgテーブル'に更新され、
+                                # 'False'文字列が入っていなければ、'calculateテーブル'に更新される
+                                # ↓　for文のbreakやelseの使い方は 
+                                # 右を参照　https://python.civic-apps.com/else-loop/
+                                for valFal in d_dic.values():
+                                    #　↓　県単のデータであることを示すものが、d_dicの値の中にあった場合
+                                    if valFal=='Thru' or valFal=='県障' :
+                                        # ↓　もう一回、そのd_dicの値をfor文で洗いざらい調べて、
+                                        # 'False'があった場合には、ErrKentanD_obj　県単のエラーデータに収める
+                                        for valFal2 in d_dic.values():
+                                            #　↓　flg2 !='False'⇒県単のダイアログを表示した後の場合 
+                                            if valFal2=='False'and flg2 !='False':
+                                                """ d_dic['id'] =wsh_id_4kenErr
+                                                wsh_id_4kenErr += 1 """
+                                                ErrKentanD_obj.append(d_dic)
+                                                break
+                                        #　↓それ以外は、valFal2のfor文を抜け出して、KentanD_obj　県単のデータに収める
+                                        else:
+                                            """ d_dic['id'] =wsh_id_4ken
+                                            wsh_id_4ken += 1 """
+                                            KentanD_obj.append(d_dic)
+                                        break
+                                    #　↓　県単以外で'False'などが見受けられたら、ErrD_objに収める
+                                    elif valFal=='False'or pd.isnull(valFal) or valFal=='NotFound' or valFal=='0' or valFal=='00000000':
+                                        """ d_dic['id'] =wsh_id_4err
+                                        wsh_id_4err += 1 """
+                                        
+                                        ErrD_obj.append(d_dic)
 
-                                    break
-                            #　↓　県単以外で'False'などがまったくなかったら、 loadD_objに収める。
-                            # もしくは、year month dialogに飛ぶ
-                            else:
-                                """ d_dic['id'] =wsh_id_4calc """
-                                # year_month Dialogにて、年・月・施術者名などを確認するため、
-                                # いずれの項目にもFalseがない一番目のレコードで、なおかつ
-                                # year_month Dialogがまだ開かれていない(flg1 =='False')場合、
-                                # 施術管理者名や登録記号番号、施術署名をparsonal_dataにぶっこんで
-                                # jsonifyしてreturnで返す
-                                """ if wsh_id_4calc == 1 and flg1 =='False': """
-                                if len(loadD_obj) == 0 and flg1 =='False' and d_dic['title_kentan'] !='県障':
-                                    parsonal_data['therapistName']=d_dic['therapistName']
-                                    parsonal_data['treatmentHosName']=d_dic['treatmentHosName']
-                                    parsonal_data['registerNo_Str']=d_dic['registerNo_Str']
-                                    parsonal_data['year_Int'] =int(d_dic['year_Str'])
-                                    parsonal_data['month_Int'] =int(d_dic['month_Str'])
-                                    
-                                    # ↓　year_month Dialogに遷移する前に、df_new[session['user_access_time']]
-                                    # に格納したdataframeが消えてしまわないように、一時的にフロントエンド側
-                                    # （index2）に送って保存しておいてもらう。
-                                    # parsonal_data内に辞書として格納されたdf_new2は、jsonify(parsonal_data)
-                                    # によって、一回json化されるものの、それだけではエラーが出てしまう。
-                                    # なぜなら、dataframe部分は単純にjson化できないから。
-                                    # つまり、dataframe部分を先に一度json化して、それをさらにもう一度全体を
-                                    # jsonify(parsonal_data)で2重にjson化しなければ、フロントエンド側には送れない。 
-                                    
-                                    # pd.to_json()の使い方
-                                    # 参考⇒https://note.nkmk.me/python-pandas-to-json/
-                                    df_new2={}
-                                    for k, v in df_new[session['user_access_time']].items():
-                                        df_new2[k]=v.to_json()
-                                    parsonal_data['df_new2']=df_new2
-                                    # year_month Dialogへと遷移する
-                                    return jsonify(parsonal_data)
-                            # ↓　いずれの項目にもFalseがなく、year_month Dialogが
-                            # すでに開かれている場合(flg1 =='False')場合、loadD_obj
-                            # に加えられていく
-                                """ wsh_id_4calc += 1 """
-                                loadD_obj.append(d_dic)
+                                        break
+                                #　↓　県単以外で'False'などがまったくなかったら、 loadD_objに収める。
+                                # もしくは、year month dialogに飛ぶ
+                                else:
+                                    """ d_dic['id'] =wsh_id_4calc """
+                                    # year_month Dialogにて、年・月・施術者名などを確認するため、
+                                    # いずれの項目にもFalseがない一番目のレコードで、なおかつ
+                                    # year_month Dialogがまだ開かれていない(flg1 =='False')場合、
+                                    # 施術管理者名や登録記号番号、施術署名をparsonal_dataにぶっこんで
+                                    # jsonifyしてreturnで返す
+                                    """ if wsh_id_4calc == 1 and flg1 =='False': """
+                                    if len(loadD_obj) == 0 and flg1 =='False' and d_dic['title_kentan'] !='県障':
+                                        parsonal_data['therapistName']=d_dic['therapistName']
+                                        parsonal_data['treatmentHosName']=d_dic['treatmentHosName']
+                                        parsonal_data['registerNo_Str']=d_dic['registerNo_Str']
+                                        parsonal_data['year_Int'] =int(d_dic['year_Str'])
+                                        parsonal_data['month_Int'] =int(d_dic['month_Str'])
+                                        
+                                        # ↓　year_month Dialogに遷移する前に、df_new[session['user_access_time']]
+                                        # に格納したdataframeが消えてしまわないように、一時的にフロントエンド側
+                                        # （index2）に送って保存しておいてもらう。
+                                        # parsonal_data内に辞書として格納されたdf_new2は、jsonify(parsonal_data)
+                                        # によって、一回json化されるものの、それだけではエラーが出てしまう。
+                                        # なぜなら、dataframe部分は単純にjson化できないから。
+                                        # つまり、dataframe部分を先に一度json化して、それをさらにもう一度全体を
+                                        # jsonify(parsonal_data)で2重にjson化しなければ、フロントエンド側には送れない。 
+                                        
+                                        # pd.to_json()の使い方
+                                        # 参考⇒https://note.nkmk.me/python-pandas-to-json/
+                                        df_new2={}
+                                        for k, v in df_new[session['user_access_time']].items():
+                                            df_new2[k]=v.to_json()
+                                        parsonal_data['df_new2']=df_new2
+                                        # year_month Dialogへと遷移する
+                                        return jsonify(parsonal_data)
+                                # ↓　いずれの項目にもFalseがなく、year_month Dialogが
+                                # すでに開かれている場合(flg1 =='False')場合、loadD_obj
+                                # に加えられていく
+                                    """ wsh_id_4calc += 1 """
+                                    loadD_obj.append(d_dic)
 
             #--------------------------------------------------------------------
             #ここまでで、 df_new[session['user_access_time']]から
