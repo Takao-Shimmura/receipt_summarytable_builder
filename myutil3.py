@@ -3,7 +3,7 @@ from flask import Flask, session
     #redirect, jsonify, current_app, g
 #import psycopg2
 import openpyxl # 外部ライブラリ　pip install openpyxl
-import sqlite3
+
 #import json
 from datetime import datetime
 import pprint
