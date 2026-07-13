@@ -1,4 +1,4 @@
-#!python3.9.1
+#!python3.11.5
 
 #　1⃣herokuにデプロイした時に、
 # 　　●多ユーザー同時接続による変数のバッティング
@@ -1096,7 +1096,13 @@ def upload_copy_paste():
 
                                         elif 'first_consultation_fee' in cA: 
                                             d_dic[cA] = 'Thru'    
-
+                                        
+                                        #マッサージ申請書の　欄外の保険者名　に（）が入っていた時に取り除く
+                                        elif 'insurer_name' in cA: 
+                                            if "(" in cellV1 and ")" in cellV1:
+                                                d_dic[cA] = cellV1.replace("(", "").replace(")", "")
+                                            else:        
+                                                d_dic[cA] = cellV1                        
 
                                         # 上記以外ならば、素直にセルの値が入る。
                                         else:
