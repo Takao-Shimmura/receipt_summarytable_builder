@@ -34,6 +34,7 @@ import os
 import pathlib
 import pytz
 import pprint
+
 import copy #　リストや辞書などのミュータブル（更新可能）オブジェクトをコピーする際に必要
 # ↑　参照　https://note.nkmk.me/python-copy-deepcopy/
 
@@ -51,7 +52,8 @@ from myutil3 import Search_condition,InsurerData,\
         kensuu_insert,kingaku_insert,koukikourei_No_Sort,\
         error_Msg_Sheet,loadD_obj_furiwake_kenshikai,\
         KentanD_obj_furiwake_kenshikai,get_insurerData_all,\
-        name_delite_space,my_round
+        name_delite_space,my_round,\
+        get_dic_schCond2calAttr2,get_search_condition2,new_style_copy_paste_each_sheet
 
 
 #　↓　herokuにデプロイすると、画像ファイルが読み込めない。
@@ -80,7 +82,7 @@ def index():
      #残っていたときに、HPを更新した時に予め削除してリセットしておく
     path = pathlib.Path("./")   
     for pass_obj in path.iterdir():
-        if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
+        if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
             pass_obj.unlink()
     # session['user_access_time']は、ユーザーごとに、
     # トップページにアクセスしてきた日時を振り分けて、IDの様に用いるためのもの。
@@ -109,21 +111,23 @@ def upload():
         #dataframeを、{「シート名」:「dataframe」}  という形の辞書として
         # 整理したものを入れておく変数
         parsonal_data={}
+        
+        flg1 = request.form.get('dialogFlg')
+
+        #app.logger.info('flg1={}'.format(flg))
+        # ↓　flg2は県単のダイアログを表示したか否かのフラグ変数
+        flg2= request.form.get('kentanDialogFlg')
         # ↓　このif節は・・・
         # 申請の年・月・施術者名・施術所名・登録記号番号を入力する
         # ダイアログを通過した場合は、dialog_flg＝True ＞＞よってif節以下は実行されない
         # 通過していない場合（ファイルのアップデートの時）には　dialog_flg = NoneもしくはFalse
         # ＞＞よってif節以下は実行される
-        flg1 = request.form.get('dialogFlg')
-        #app.logger.info('flg1={}'.format(flg))
-        # ↓　flg2は県単のダイアログを表示したか否かのフラグ変数
-        flg2= request.form.get('kentanDialogFlg')
         if flg1 =='False':
             
             #https://blog.imind.jp/entry/2020/01/25/032249
             #を参照 拡張子チェック機能１↓ (Excelファイルの拡張子であることを確認するための仕込み段階１)
             ALLOWED_EXTENSIONS = ['.xlsx']
-            # ↓ 参照元のサンプルコードでは以下の様だったが、flask.がエラーとなったため削除
+            # ↓ 参照元のサンプルコードでは以下の様に書かれていたが、flask.がエラーとなったため削除
             #if 'file' not in flask.request.files:
             if 'file' not in request.files:
                 parsonal_data['failed_msg']='読み込めないファイル形式です　アップロード失敗'
@@ -156,8 +160,8 @@ def upload():
             
             path = pathlib.Path("./")    #相対パス指定
             for pass_obj in path.iterdir():
-                if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
-                    #  Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
+                if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
+                    #  ↓Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
                     #{「シート名」:「dataframe」,「シート名」:「dataframe」}  という形の辞書として取り出される。
                     # そのままdfという変数に辞書として入れておいてもいいのだが、
                     #　ユーザーID代わりのsession['user_access_time']をキーとして
@@ -544,6 +548,7 @@ def upload():
                                     """ wsh_id_4calc += 1 """
                                     loadD_obj.append(d_dic)
 
+
             #--------------------------------------------------------------------
             #ここまでで、 df_new[session['user_access_time']]から
             # loadD_obj、ErrD_obj、KentanD_obj、ErrKentanD_objへの書き込みが
@@ -564,9 +569,7 @@ def upload():
                 parsonal_data['kentanErrData']=ErrKentanD_obj
                 return jsonify(parsonal_data)
 
-
-
-        parsonal_data['process_msg']='総括票　作成中・・・' 
+        parsonal_data['process_msg']='総括票を作成中・・・' 
         #--------------------------------------------------------------------
         # 新潟県師会の総括表に県障の金額を入れ込む際に、
         # 同じ患者の療養費支給申請書から「一部負担金」の金額を持ってきて、
@@ -789,9 +792,7 @@ def download():
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    sendingFile=send_file(download_file, as_attachment=True,\
-              attachment_filename=download_file_name,\
-              mimetype=XLSX_MIMETYPE)
+    sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
 
     return sendingFile
 
@@ -799,12 +800,429 @@ def download():
 def dlf_delete(): 
     path = pathlib.Path("./") 
     for pass_obj in path.iterdir():
-            if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx':
+            if pass_obj.match("*.xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
                 # ↓ 作成された総括票ファイルを、ダウンロード後に削除
                 # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
                 # pathlibライブラリを用いたテクニック。
                 pass_obj.unlink()
-    return '総括票を作成しました。ダウンロードして「名前を付けて保存」してください。'
+    return 'ファイルを作成しました。ダウンロードして「名前を付けて保存」してください。'
+
+# アップロードされた申請書ファイルの内容を、新しい申請書のファイルにコピペする機能
+@app.route('/upload_copy_paste', methods=['POST'])
+def upload_copy_paste():
+        df_new={}
+        #df_new={}・・・pandasを用いてエクセルを読み込んで作成される
+        #dataframeを、{「シート名」:「dataframe」}  という形の辞書として
+        # 整理したものを入れておく変数
+        parsonal_data={}
+            
+        #https://blog.imind.jp/entry/2020/01/25/032249
+        #を参照 拡張子チェック機能１↓ (Excelファイルの拡張子であることを確認するための仕込み段階１)
+        ALLOWED_EXTENSIONS = ['.xlsx']
+        # ↓ 参照元のサンプルコードでは以下の様に書かれていたが、flask.がエラーとなったため削除
+        #if 'file' not in flask.request.files:
+        if 'file' not in request.files:
+            parsonal_data['failed_msg']='読み込めないファイル形式です　アップロード失敗'
+            return jsonify(parsonal_data)
+
+        # fileの取得（FileStorage型で取れる）
+        # https://tedboy.github.io/flask/generated/generated/werkzeug.FileStorage.html
+        
+        # ↓ 参照元のサンプルコードでは以下の様だったが、flask.がエラーとなったため削除
+        #fs = flask.request.files['file']
+        fs = request.files['file']
+
+        # 下記のような情報がFileStorageからは取れる⇒デバックコンソールに表示される仕組みにしてある
+        #app.logger.info('file_name={}'.format(fs.filename))
+        #app.logger.info('content_type={} content_length={}, mimetype={}, mimetype_params={}'.format(
+            #fs.content_type, fs.content_length, fs.mimetype, fs.mimetype_params))
+        
+        #拡張子チェック機能２↓(Excelファイルの拡張子であることを確認するための仕込み段階２)
+        suffix = pathlib.Path(fs.filename).suffix
+        #拡張子チェック機能３↓↓(Excelファイルの拡張子であることを確認する段階)
+        if not suffix in ALLOWED_EXTENSIONS:
+            parsonal_data['failed_msg']="保存できないファイル形式です {}".format(suffix)
+            return jsonify(parsonal_data)
+        else:
+            """ # ファイルを保存
+            fs.save(fs.filename) """
+            # ファイルを保存
+            fs.save(session['user_access_time']+".xlsx")
+            # ↓以下はエクセルを読み込んで、データベースに登録する段取り
+        
+        path = pathlib.Path("./")    #相対パス指定
+        for pass_obj in path.iterdir():
+            if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
+                #  ↓Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
+                #{「シート名」:「dataframe」,「シート名」:「dataframe」}  という形の辞書として取り出される。
+                # そのままdfという変数に辞書として入れておいてもいいのだが、
+                #　ユーザーID代わりのsession['user_access_time']をキーとして
+                #  {session['user_access_time']:{「シート名」:「dataframe」},...}
+                # という辞書in辞書の形で変数dfに入れ込んでおく。
+                # そうすることで、多数のユーザーが同時にアクセスしたときに、dfの中身
+                # が勝手に書き換えられたり、バッティングすることを防ぐため
+                df={}
+                df[session['user_access_time']] = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
+                # ↓ アップロードされたファイルを、情報を読み取った後に削除
+                # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
+                # pathlibライブラリを用いたテクニック。
+                pass_obj.unlink()
+
+                #　↓　df[session['user_access_time']]内にある、各シートから読み込んだ
+                # dataframeのインデックスとヘッダーを番号振りなおしして
+                # 変数df_newに入れ込んでいく。
+                # この時も、多ユーザー同時接続のバッティングを防ぐために、
+                # ユーザーID代わりのsession['user_access_time']をキーとして
+                # 格納しておく
+
+                # Excelから読み込んだデータ（DataFrame）の「列番号（ヘッダー）」を、0から始まる番号ではなく、
+                # 1から始まる連番に振り直す処理をしています。
+                # ↓ 
+                # dfdic.index=range(1,shp[0]+1)
+                # dfdic.columns=range(1,shp[1]+1)
+                
+                df_new[session['user_access_time']]={}
+                for dfsh in df[session['user_access_time']]: 
+                    dfdic=df[session['user_access_time']][dfsh]
+                    dfdic.reset_index(drop=True, inplace=True)
+                    shp=dfdic.shape
+                    dfdic.index=range(1,shp[0]+1)
+                    dfdic.columns=range(1,shp[1]+1)
+                    df_new[session['user_access_time']][dfsh]=dfdic
+     
+        #　↓　変数condDict2に、検索条件の辞書を込める
+        condDict2 = get_search_condition2()
+        #app.logger.info('condDict={}'.format(condDict))
+        #　↓　変数sC2cAdic2に、辞書を込める
+        # ’キー’は'seardhテーブル'の「属性」の文字列：
+        # ’値’は’calculateテーブル’の「属性」の文字列
+        sC2cAdic2 = get_dic_schCond2calAttr2()
+
+        # app.logger.info('df_new after={}'.format(df_new)) 
+        """ wsh_id_4calc = 1 # loadD_objに乗せるデータのidをリセット
+        wsh_id_4err = 1 # ErrD_objに乗せるデータのidをリセット
+        wsh_id_4ken = 1 # 県単に乗せるデータのidをリセット
+        wsh_id_4kenErr = 1 # 県単に乗せるエラーのデータのidをリセット """
+        loadD_obj=[]
+
+ 
+        for cD in condDict2:
+            for dfN_Key in df_new[session['user_access_time']]:# dfN_Keyはシート名
+                df_value=df_new[session['user_access_time']][dfN_Key]#df_valueに1シート分のdataframeを入れておく。
+                # ↓　DataFrameがある大きさを越えないと、読み込まないようにしておく（はorマ　の申請用紙以外のDataFrameを読み込まない）
+                # df_value.shape[0] (DataFrame.shape[0])は、1シート分のデータフレームの最大行。
+                # df_value.shape[1] (DataFrame.shape[1])は、1シート分のデータフレームの最大列。
+                #　参照　https://note.nkmk.me/python-pandas-len-shape-size/
+                # df_value.shape[0] >= 78 は県障（新潟市内）、df_value.shape[1] >=68 は県障（新潟市外）
+                if df_value.shape[0] >= 78 and df_value.shape[1] >= 68 : 
+                    # ↓　2024年10月30日修正
+                    # ↓　DataFrameの外枠よりも行数が多いところをacupOrMass_Cellで検索しようとすると、pandasのエラーがでて、
+                    #　全体が止まって読み込みがストップするエラーが出る。
+                    # 具体例として、2024年10月~の新しい申請書ではCell(5,101)に相当するところのDataFrameデータに、
+                    # 'acupOrMass_Condition'（はりきゅう用）／（あんま・マッサージ用）／県障と入力されているか否かを基準として、
+                    # 　このシートが申請書なのかどうかを認識する。
+                    # 　しかし、最大72行しかない旧申請書や、最大68行しかない県障のシートでは、101行目のセルを検索しようとしてもエラーが出る
+                    #　それを回避するために、df_value.shape[1] ⇒シートの最大行　＞＝　get_cellno_2list(cD['acupOrMass_Cell'])[1]⇒101行
+                    #　・・・が成り立つ時だけ、読み込むように変更した。
+                    if df_value.shape[1] >= get_cellno_2list(cD['acupOrMass_Cell'])[1]:
+                        # ↓　検索条件となるacupOrMass_Cell　のセル位置に　acupOrMass_Condition　に相当する値が入っているかどうかを判定している
+                        # df_value.loc[?,?] (DataFrame.loc[?,?])は、下記を参照
+                        # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
+                        if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
+                            get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
+                            #　↓　変数d_dicは辞書。後に一気にcalculateテーブルを更新するためのデータを入れとく
+                            d_dic={}
+                            d_dic['sheetName'] =dfN_Key # シート名を入れておく
+
+                            d_dic['title_AcupOrMass'] =cD['title_AcupOrMass']
+                            # ↑　はきorマを入れておく
+                            # ↑　県単の場合は''空欄を入れておいて、
+                            # 後にkentanダイアログにて　「県老/県障/県親/単子_はき/マ」　を入れてもらう
+                            
+                            # ↓「年」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                            #nanだったときには'False'
+                            if not pd.isnull(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                get_cellno_2list(cD['yearTop_Cell'])[1]] ) and \
+                                not pd.isnull(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                                get_cellno_2list(cD['year1st_Cell'])[1]]) and\
+                                not pd.isnull(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                                get_cellno_2list(cD['yearLast_Cell'])[1]]):
+
+                                # ↓「年」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                                # 　d_dic辞書に　year_Strをキーとして、yearTop_Cellの値を込めておく
+                                if int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]] )) == \
+                                    int(float(df_value.loc[get_cellno_2list(cD['year1st_Cell'])[0],\
+                                    get_cellno_2list(cD['year1st_Cell'])[1]]))  and\
+                                    int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]]))  == \
+                                    int(float(df_value.loc[get_cellno_2list(cD['yearLast_Cell'])[0],\
+                                    get_cellno_2list(cD['yearLast_Cell'])[1]]))  and\
+                                    int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]]))  != 0:
+
+                                    d_dic['year_Str'] =\
+                                    str(int(float(df_value.loc[get_cellno_2list(cD['yearTop_Cell'])[0],\
+                                    get_cellno_2list(cD['yearTop_Cell'])[1]] )))
+                                else:
+                                    d_dic['year_Str'] ='False'
+                            else:
+                                d_dic['year_Str'] ='False'
+                            # ↓「月」が入力されているセル3か所の値がnanではないときに、以下の処理を行う
+                            #nanだったときには'False'
+                            if not pd.isnull(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                get_cellno_2list(cD['monthTop_Cell'])[1]] ) and \
+                                not pd.isnull(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                                get_cellno_2list(cD['month1st_Cell'])[1]]) and\
+                                not pd.isnull(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                                get_cellno_2list(cD['monthLast_Cell'])[1]]):    
+                                # ↓「月」が入力されているセル3か所の、値が一致して、なおかつ　0ではないときに
+                                # 　d_dic辞書に　month_Strをキーとして、monthTop_Cellの値を込めておく
+                                if int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )) == \
+                                    int(float(df_value.loc[get_cellno_2list(cD['month1st_Cell'])[0],\
+                                    get_cellno_2list(cD['month1st_Cell'])[1]]))  and\
+                                    int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]]))  == \
+                                    int(float(df_value.loc[get_cellno_2list(cD['monthLast_Cell'])[0],\
+                                    get_cellno_2list(cD['monthLast_Cell'])[1]]))  and\
+                                    int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]]))  != 0:
+                                                                        
+                                    d_dic['month_Str'] =\
+                                    str(int(float(df_value.loc[get_cellno_2list(cD['monthTop_Cell'])[0],\
+                                    get_cellno_2list(cD['monthTop_Cell'])[1]] )))
+                                else:
+                                    d_dic['month_Str'] ='False'
+                            else:
+                                d_dic['month_Str'] ='False'
+
+                            for sC,cA in sC2cAdic2.items():
+                            # {sC:cA}の辞書は、search conditionとcalculate attributeの略。
+                            #  get_dic_schCond2calAttr2()関数で設定してある。
+                            # month,year,name_nospace,sheetname,title_AcupOrMass以外の項目を、
+                            # 検索セルと項目のセットで辞書化したもの   
+                                try:
+                                    # これから判定しなければならないdataframeの各セルのデータを以下の
+                                    # cellV1に予め込めておく
+                                    #dataframeの各セルの求め方は、.loc[?,?]
+                                    cellV1=df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                        get_cellno_2list(cD[sC])[1]]
+                                    # pandasで取得したdataFrameのなかで、欠損値である'nan'は扱いが難しく、
+                                    # if文で判定するためには、 if cA=='nan' や　if cA==str('nan')では
+                                    # 判定してくれない（しかも構文エラーにならないので、ややこしい）
+                                    #　判定するためには if pd.isnull(?):とする
+                                    # （欠損値nanならば’true’／pdは　import pandas as pd　より）
+                                    # 参照⇒https://kagglenote.com/misc/pandas_nan_judge/
+                                    # ↓ちなみに、今回のif文の意味は、「cellV1の中身が、nullではなかったとき」
+                                    # エラーが出る（cellV1がnanだったら）exceptに飛んで、（cellV1がpassだったら）'Thru'が入る。
+                                    if not pd.isnull(cellV1) :
+
+                                        
+                                        # ↓　もしも、更新先のテーブルの「属性」に'insurer_No_Str'(保険者番号)という文字列
+                                        # が含まれていたら、'insurerNoLast_Cell'と'insurerNo_CellStep'を駆使して
+                                        # 保険者番号を抽出し、'insurer_No_Str'をキーとして
+                                        # 文字列として入れておく
+                                        if 'insurer_No_Str' in cA:
+                                            number = ''
+                                            for n in range(0,8,1):
+                                                
+                                                #  ↓　DataFrameの場合、値が入っていない場合は’nan’
+                                                #　判定はpd.isnull()
+                                                if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                                get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
+                                                    jj = ''
+                                                #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
+                                                # の場合もOK
+                                                # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
+                                                # str(int(float(によって、無理やり整数化と文字列化をする。
+                                                else:
+                                                    try:
+                                                        jj = str(int(float(df_value.loc[get_cellno_2list(cD[sC])[0],\
+                                                        get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']] )))
+                                                    #　↓　str(int(floatでエラーが出る場合は、「数値に変換できない文字列」が入っている場合
+                                                    # そういう場合は、numberに'False'を入れて、breakでfor文を
+                                                    # とっとと抜け出す
+                                                    except:
+                                                        number= 'False'
+                                                        break
+                                                number = jj + number
+                                            d_dic[cA] = number
+                                       
+                                        
+                                        # ↓　もしも、更新先のテーブルの「属性」が'amount_Str'(合計額)もしくは
+                                        # 'copayment_Str'(一部負担金額)もしくは'billingAmount_Str'(請求額)であったら・・・
+                                        #　値がある時でもない時でも、dataframe内ではFalseにしておく
+                                        # ⇒シートのセルには数値を入れず、数式を活かしておく　
+                                        
+                                        # for文から抜け出す　参考⇒https://note.nkmk.me/python-break-nested-loops/
+                                        # カッコと論理演算子　参考⇒https://dot-blog.jp/news/python-boolean-operations-bool/
+                                        
+                                        
+                                        elif 'amount_Str' in cA or 'copayment_Str' in cA \
+                                            or 'billingAmount_Str' in cA :
+
+                                                d_dic[cA] = 'False'  
+                                        # 患者氏名（'name_nospace' ）ならば、
+                                        # セルの値からスペースを削除して 入力する
+                                        elif 'name_nospace' in cA:
+                                            d_dic[cA] =name_delite_space(cellV1)
+                                        
+                                        # ↓値がある時にはFalseにしておく⇒後々の処理でシートのセルには数値を入れず、数式を活かしておく
+
+                                        elif 'one_therapy' in cA or\
+                                            'two_therapy' in cA or\
+                                            'e_therapy_addition' in cA or\
+                                            'special_area_addition' in cA:
+                                            d_dic[cA] = 'False'  
+                                        
+                                        # 値がある時にはFalseにしておく⇒後々の処理でシートのセルには数値を入れず、数式を活かしておく
+                                        elif 'massage_part_trunk' in cA or\
+                                            'massage_part_Rarm' in cA or\
+                                            'massage_part_Larm' in cA or\
+                                            'massage_part_Rleg' in cA or\
+                                            'massage_part_Lleg' in cA or\
+                                            'heat_therapy_addition' in cA or\
+                                            'heat_e_therapy_addition' in cA or\
+                                            'manual_corrective_manipulation_addition_Rarm' in cA or\
+                                            'manual_corrective_manipulation_addition_Larm' in cA or\
+                                            'manual_corrective_manipulation_addition_Rleg' in cA or\
+                                            'manual_corrective_manipulation_addition_Lleg' in cA or\
+                                            'special_area_addition' in cA:
+                                            d_dic[cA] = 'False'    
+                                        # 値がある時にはThruにしておく
+                                        # ⇒後々の処理で、シートのセルには'　'（空の値）を入れて、セルの数式を削除しておく
+                                        #  (旧書式で「初診料」の金額が入っていた初診の人は、新書式では ふた月目 の施術となるから)
+
+                                        elif 'first_consultation_fee' in cA: 
+                                            d_dic[cA] = 'Thru'    
+
+
+                                        # 上記以外ならば、素直にセルの値が入る。
+                                        else:
+                                            d_dic[cA] = cellV1
+                                    # if文に合致しなかった場合。つまりcellV1=='null'ならば
+                                    # dataframe内ではThruにしておく、
+                                    # ⇒後々の処理で、シートのセルには'　'（空の値）を入れて、セルの数式を削除しておく
+                                    else:
+                                        d_dic[cA] = 'Thru'
+                                except:
+                                    if cD[sC]=='pass':
+                                        d_dic[cA] = 'False'
+                            #else:
+                                #app.logger.info('d_dic={}'.format(d_dic))
+                            #app.logger.info('d_dic[insurer_No_Str][0:4]={}'.format(d_dic['insurer_No_Str'][0:4]))
+                            #define_soukatsu1Desti(d_dic)
+                            
+                            # ↓ valFalに一つでも'False'文字列が入っていれば、
+                            # 'error_msgテーブル'に更新され、
+                            # 'False'文字列が入っていなければ、'calculateテーブル'に更新される
+                            # ↓　for文のbreakやelseの使い方は 
+                            # 右を参照　https://python.civic-apps.com/else-loop/
+                            
+        #　↓　シートごとのデータ（d_dic）（辞書型）を、 1シート分ずつloadD_obj（リスト型）に付け加えていく。
+                            loadD_obj.append(d_dic)
+        #app.logger.info('loadD_obj={}'.format(loadD_obj))
+            #--------------------------------------------------------------------
+            #ここまでで、 df_new[session['user_access_time']]から
+            # loadD_objへの書き込みが
+            # すべて終わっている状態
+            #--------------------------------------------------------------------
+
+        parsonal_data['process_msg']='新書式にコピペ中・・・' 
+        #--------------------------------------------------------------------
+        
+        #--------------------------------------------------------------------
+                
+                
+        #　↓　ブックの複製　参照⇒https://neko-py.com/python-excel-write-book
+        wb = openpyxl.load_workbook(filename='copy_paste_Temp.xlsx')
+        #　↓　日付や時間の取得　参照⇒https://www.sejuku.net/blog/23606
+        # しかし、上記のとおりに、date = datetime.datetime.now()　と書くとエラー
+        date = datetime.now()
+        # 2桁表示のゼロパディングは　参照⇒https://note.nkmk.me/python-zero-padding/
+
+
+        
+        # ↓　.xlsxファイルが作成された年月日と時刻を、日本時間で取得
+        # （サーバーのおかれている国によって、時刻が変動しないように）
+        # 参考⇒https://qiita.com/keisuke0508/items/df2594770d63bf124ccd
+        now = datetime.now(pytz.timezone('Asia/Tokyo'))
+
+        # ↓　作成された.xlsxファイルに、作成年月日でファイル名を命名する
+        # ↓　時刻の2桁表示（ゼロ埋め）は.zfill()で行う
+        # 参考⇒https://note.nkmk.me/python-zero-padding/
+        try:
+            dLFileName='申請書　新書式　'+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
+        except:
+            dLFileName='すべてのシートが読み込み不可'+ '.xlsx'
+
+        for loadD in loadD_obj:
+            cD2={}
+            if loadD['title_AcupOrMass']=='はりきゅう':
+                template_sheet = wb['ひな型　はりきゅう申請書'] 
+                # 1. シートの基本複製
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor =None
+                new_sheet.title = loadD['sheetName']
+
+                # 2. セルの入力規則のコピー（必要であれば残してください）
+                for dv in template_sheet.data_validations.dataValidation:
+                    copied_dv = copy.copy(dv)  # ← copy.copy に変更
+                    new_sheet.add_data_validation(copied_dv)
+
+                # 3. 条件付き書式のコピー
+                for range_string, rules in template_sheet.conditional_formatting._cf_rules.items():
+                    for rule in rules:
+                        copied_rule = copy.copy(rule)  # ← copy.copy に変更
+                        new_sheet.conditional_formatting.add(range_string, copied_rule)  
+                cD2=condDict2[3]
+                #app.logger.info('cD2={}'.format(cD2) )
+                new_style_copy_paste_each_sheet(cD2,loadD,sC2cAdic2,new_sheet)
+            elif loadD['title_AcupOrMass']=='マッサージ':
+                template_sheet = wb['ひな型　あんまマッサージ申請書']
+                # 1. シートの基本複製
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor =None
+                new_sheet.title = loadD['sheetName']
+
+                # 2. セルの入力規則のコピー（必要であれば残してください）
+                for dv in template_sheet.data_validations.dataValidation:
+                    copied_dv = copy.copy(dv)  # ← copy.copy に変更
+                    new_sheet.add_data_validation(copied_dv)
+
+                # 3. 条件付き書式のコピー
+                for range_string, rules in template_sheet.conditional_formatting._cf_rules.items():
+                    for rule in rules:
+                        copied_rule = copy.copy(rule)  # ← copy.copy に変更
+                        new_sheet.conditional_formatting.add(range_string, copied_rule)  
+                cD2=condDict2[1]
+                new_style_copy_paste_each_sheet(cD2,loadD,sC2cAdic2,new_sheet)
+
+           
+
+
+                        
+
+                
+
+        # target_sheet.title = '総括表　新潟県師会用('+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分 作成'+')' 
+
+        #app.logger.info('parsonal_data[alert_data] ={}'.format(parsonal_data['alert_data'] ))  
+        #app.logger.info('dicDesti_insur={}'.format(dicDesti_insur))
+
+        
+
+        
+        
+        wb.save(dLFileName)
+        wb.close() 
+        parsonal_data['dLFile']=dLFileName
+
+        return  jsonify(parsonal_data)
+        # '総括票 令和'+year_f+'年'+month_f+'月分　'+str(date.month).zfill(2)+'月' +str(date.day).zfill(2) +'日'+ str(date.hour).zfill(2)+'時' + str(date.minute).zfill(2) +'分'+str(date.second).zfill(2) +'秒 作成'+ '.xlsx')
+
+
 if __name__=='__main__':
     app.debug = True
 

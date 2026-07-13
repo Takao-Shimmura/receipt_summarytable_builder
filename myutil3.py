@@ -8,7 +8,6 @@ import openpyxl # 外部ライブラリ　pip install openpyxl
 from datetime import datetime
 import pprint
 
-
 import os
 import pathlib
 
@@ -19,12 +18,13 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound
 
 
-#　↓　herokuのpostgreSQL接続用URI 
+#　↓　railwayのpostgreSQL接続用URI 
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
-#参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
 engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
 
+#　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ICM_demoデータベースへの接続用URI 
+#engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ICM_demo')
 
 
 
@@ -40,9 +40,10 @@ class Search_condition(Base):
     
     # ※県単の書類の場合、「読み取らないセル」は、データベースに文字列'pass'を入れておく
     condition_Title = Column(String(255))
-    #「condition_Title」はデータベースを閲覧するときの表題
-    # として設けたもので、Flaskでは使用しない
-    # ※例外的に県単の書類かどうかの判定に用いる⇒「県単医療費助成申請書」という文字列
+    #「condition_Title」は
+    # 「2024年10月～書式マッサージ」「2026年7月～書式マッサージ」「2024年10月～書式はりきゅう」「2026年7月～書式はりきゅう」
+    # のいずれかのシートかどうかの判定に用いる
+    # ※もしくは、県単の書類かどうかの判定に用いる⇒「県単医療費助成申請書」という文字列
     title_AcupOrMass= Column(String(255))
     #「title_AcupOrMass」は「はりきゅう」／「マッサージ」のいずれかが入る
     acupOrMass_Condition = Column(String(255))
@@ -166,12 +167,440 @@ def get_dic_schCond2calAttr():
         
           
     }
+
+# ↓2026年7月からの新書式にコピペするために新しく作成しなければならない
+class Search_condition2(Base):
+    __tablename__='search2'
+
+    id=Column(Integer,primary_key=True)
+    
+    # ※「読み取らないセル」は、データベースに文字列'False'を入れておく。「消去したいセル」は'Thru'を入れておく
+    condition_Title = Column(String(255))
+    #「condition_Title」は
+    # 「2024年10月～書式マッサージ」「2026年7月～書式マッサージ」「2024年10月～書式はりきゅう」「2026年7月～書式はりきゅう」
+    # のいずれかのシートかどうかの判定に用いる
+    title_AcupOrMass= Column(String(255))
+    #「title_AcupOrMass」は「はりきゅう」／「マッサージ」のいずれかが入る
+    acupOrMass_Condition = Column(String(255))
+    #「acupOrMass_Condition」は「（はり・きゅう用）」／
+    # 「（あんま・マッサージ用）」のいずれかが入る（新書式になって変更もありうる）
+    
+
+    # ※※　↓↓　これ以降の項目に入る値は、「対象となるセル」の「行数」と「列数」を
+    #'?_?'という文字列にしたもの
+    first_consultation_fee_Cell = Column(String(255))
+    # ↑「対象セル」⇒（はり・きゅう用）の初診料が入力されているセル
+    acupOrMass_Cell = Column(String(255))
+    # ↑「対象セル」⇒（はり・きゅう用）もしくは（あんま・マッサージ用）が入力されているセル
+    # ↑※例外的に、「県単医療費助成申請書」が入っているセルにも用いる
+    insurerNoLast_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒保険者番号の末尾の番号が入力されているセル
+    insurerNo_CellStep=Column(Integer)
+    # ↑保険者番号の末尾の番号 から左に何セルずつずれていくと、
+    #次の番号になるか？　を数字で表したもの　マイナスの値になる
+    insuraCodeNo_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒被保険者証等の記号番号が入力されているセル
+    name_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒施術を受けた者の氏名が入力されているセル
+    nameKana_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒施術を受けた者の氏名の読み仮名（カタカナ）が入力されているセル
+    amount_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒合計　のセル
+    copayment_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒一部負担金　のセル
+    billingAmount_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒請求額　のセル
+    relationship_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒続柄　のセル
+    #<2021 7月分より削除>insuredName_Cell = Column(String(255))
+    # ↑ 「対象セル」⇒被保険者（申請書の下方の「申請欄」）のセル
+    therapistName_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の「施術者名」のセル
+    treatmentHosName_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の「施術所名」のセル
+    treatmentHosAddress_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の「施術所住所」のセル
+    registerNo_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の「登録記号・番号」のセル
+    yearTop_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の一番上の行の、「年」のセル
+    year1st_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の施術期間の、開始日の「年」のセル
+    yearLast_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の施術期間の、終了日の「年」のセル
+    # ※県単の場合は、yearTop/1st/Lastいずれも同じセルにしておく
+
+    monthTop_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の一番上の行の、「月」のセル
+    month1st_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の施術期間の、開始日の「月」のセル
+    monthLast_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄」の施術期間の、終了日の「月」のセル
+    # ※県単の場合は、monthTop/1st/Lastいずれも同じセルにしておく
+
+    birthday_year_Cell= Column(String(255))
+     # ↑ 「対象セル」⇒「患者の生年月日」の「年」のセル
+    birthday_month_Cell= Column(String(255))
+     # ↑ 「対象セル」⇒「患者の生年月日」の「月」のセル
+    birthday_day_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「患者の生年月日」の「日」のセル
+
+    incidence_year_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「年」のセル
+    incidence_month_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「月」のセル
+    incidence_day_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「日」のセル
+    incidence_name_cause_progress_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「傷病名、発症又は負傷の原因及びその経過」のセル
+    first_therapy_era_name_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「初療年月日」の「元号」のセル
+    first_therapy_year_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「初療年月日」の「年」のセル
+    first_therapy_month_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「初療年月日」の「月」のセル
+    first_therapy_day_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「初療年月日」の「日」のセル
+    incidence_name_other_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「傷病名」の「その他」のカッコ内のセル
+
+    summary_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「摘要」のセル
+    copayment_percentage_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「一部負担金割合」のセル
+    treatment_hos_address_no1_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最初の3桁」のセル
+    treatment_hos_address_no2_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最後の4桁」のセル
+    treatment_hos_tel_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「施術所電話番号」のセル
+    representative_insurer_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄保険者代表者」のセル
+    insurer_name_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「申請欄保険者名（欄外）」のセル
+    insured_person_address_no1_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「被保険者郵便番号」の「最初の3桁」のセル
+    insured_person_address_no2_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「被保険者郵便番号」の「最後の4桁」のセル
+    insured_person_address_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「被保険者住所」のセル
+    insured_person_name_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「被保険者氏名」のセル
+    insured_person_tel_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「被保険者電話番号」のセル
+    consenting_doctor_name_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意医師氏名」のセル
+    consenting_doctor_address_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意医師の住所」のセル
+    consenting_year_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意年月日」の「年」のセル
+    consenting_month_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意年月日」の「月」のセル
+    consenting_day_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意年月日」の「日」のセル
+    consenting_incidence_name_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意傷病名」のセル
+
+    # ※※　↓↓　これ以降は、コピペ元のセルの値がnullだったときに、コピペ先のセルの数式をdeleteしておくセル
+    
+    #　はりきゅう編
+    one_therapy_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「施術の種類1術」の「回数」のセル
+    two_therapy_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「施術の種類2術」の「回数」のセル
+    e_therapy_addition_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「電療料加算」の「回数」のセル
+
+    #　マッサージ編
+    massage_part_trunk_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意部位躯幹」の「回数」のセル
+    massage_part_Rarm_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意部位右上肢」の「回数」のセル
+    massage_part_Larm_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意部位左上肢」の「回数」のセル
+    massage_part_Rleg_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意部位右下肢」の「回数」のセル
+    massage_part_Lleg_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「同意部位左下肢」の「回数」のセル
+    heat_therapy_addition_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「温罨法加算」の「回数」のセル
+    heat_e_therapy_addition_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「温罨法電気光線器具加算」の「回数」のセル
+    manual_corrective_manipulation_addition_Rarm_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「変形徒手矯正術右上肢」の「回数」のセル
+    manual_corrective_manipulation_addition_Larm_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「変形徒手矯正術左上肢」の「回数」のセル
+    manual_corrective_manipulation_addition_Rleg_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「変形徒手矯正術右下肢」の「回数」のセル
+    manual_corrective_manipulation_addition_Lleg_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「変形徒手矯正術左下肢」の「回数」のセル
+
+    # はりきゅう　マッサージ共通
+    special_area_addition_Cell= Column(String(255))
+    # ↑ 「対象セル」⇒「特別地域加算」の「回数」のセル
+
+    # get Dict data
+    def to_dict(self):
+        return{
+            'id':int(self.id),
+            'condition_Title':str(self.condition_Title),#　実はこの項目はデータベース上の　レコードのタイトル　であるのでほぼ使用しない
+            'title_AcupOrMass':str(self.title_AcupOrMass),
+            'acupOrMass_Condition':str(self.acupOrMass_Condition),
+            'acupOrMass_Cell':str(self.acupOrMass_Cell),
+            'insurerNoLast_Cell':str(self.insurerNoLast_Cell),
+            'insurerNo_CellStep':int(self.insurerNo_CellStep),
+            'insuraCodeNo_Cell':str(self.insuraCodeNo_Cell),
+            'name_Cell':str(self.name_Cell),
+            'nameKana_Cell':str(self.nameKana_Cell),
+            'first_consultation_fee_Cell':str(self.first_consultation_fee_Cell),
+            'amount_Cell':str(self.amount_Cell),  
+            'copayment_Cell':str(self.copayment_Cell),  
+            'billingAmount_Cell':str(self.billingAmount_Cell),  
+            'relationship_Cell':str(self.relationship_Cell),  
+            'therapistName_Cell':str(self.therapistName_Cell),
+            'treatmentHosName_Cell':str(self.treatmentHosName_Cell),
+            'treatmentHosAddress_Cell':str(self.treatmentHosAddress_Cell),
+            'registerNo_Cell':str(self.registerNo_Cell),
+            'yearTop_Cell':str(self.yearTop_Cell),
+            'year1st_Cell':str(self.year1st_Cell),
+            'yearLast_Cell':str(self.yearLast_Cell),
+            'monthTop_Cell':str(self.monthTop_Cell),
+            'month1st_Cell':str(self.month1st_Cell),
+            'monthLast_Cell':str(self.monthLast_Cell),
+            'birthday_year_Cell' :str(self.birthday_year_Cell),
+            'birthday_month_Cell' :str(self.birthday_month_Cell),
+            'birthday_day_Cell' :str(self.birthday_day_Cell),
+
+            'incidence_year_Cell':str(self.incidence_year_Cell),
+            # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「年」のセル
+            'incidence_month_Cell':str(self.incidence_month_Cell),
+            # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「月」のセル
+            'incidence_day_Cell':str(self.incidence_day_Cell),
+            # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「日」のセル
+            'incidence_name_cause_progress_Cell':str(self.incidence_name_cause_progress_Cell),
+            # ↑ 「対象セル」⇒「傷病名、発症又は負傷の原因及びその経過」のセル
+            'first_therapy_era_name_Cell':str(self.first_therapy_era_name_Cell),
+            # ↑ 「対象セル」⇒「初療年月日」の「元号」のセル
+            'first_therapy_year_Cell':str(self.first_therapy_year_Cell),
+            # ↑ 「対象セル」⇒「初療年月日」の「年」のセル
+            'first_therapy_month_Cell':str(self.first_therapy_month_Cell),
+            # ↑ 「対象セル」⇒「初療年月日」の「月」のセル
+            'first_therapy_day_Cell':str(self.first_therapy_day_Cell),
+            # ↑ 「対象セル」⇒「初療年月日」の「日」のセル
+            'incidence_name_other_Cell':str(self.incidence_name_other_Cell),
+            # ↑ 「対象セル」⇒「傷病名」の「その他」のカッコ内のセル
+
+            'summary_Cell':str(self.summary_Cell),
+            # ↑ 「対象セル」⇒「摘要」のセル
+            'copayment_percentage_Cell':str(self.copayment_percentage_Cell),
+            # ↑ 「対象セル」⇒「一部負担金割合」のセル
+            'treatment_hos_address_no1_Cell':str(self.treatment_hos_address_no1_Cell),
+            # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最初の3桁」のセル
+            'treatment_hos_address_no2_Cell':str(self.treatment_hos_address_no2_Cell),
+            # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最後の4桁」のセル
+            'treatment_hos_tel_Cell':str(self.treatment_hos_tel_Cell),
+            # ↑ 「対象セル」⇒「施術所電話番号」のセル
+            'representative_insurer_Cell':str(self.representative_insurer_Cell),
+            # ↑ 「対象セル」⇒「申請欄保険者代表者」のセル
+            'insurer_name_Cell':str(self.insurer_name_Cell),
+            # ↑ 「対象セル」⇒「申請欄保険者名（欄外）」のセル
+            'insured_person_address_no1_Cell':str(self.insured_person_address_no1_Cell),
+            # ↑ 「対象セル」⇒「被保険者郵便番号」の「最初の3桁」のセル
+            'insured_person_address_no2_Cell':str(self.insured_person_address_no2_Cell),
+            # ↑ 「対象セル」⇒「被保険者郵便番号」の「最後の4桁」のセル
+            'insured_person_address_Cell':str(self.insured_person_address_Cell),
+            # ↑ 「対象セル」⇒「被保険者住所」のセル
+            'insured_person_name_Cell':str(self.insured_person_name_Cell),
+            # ↑ 「対象セル」⇒「被保険者氏名」のセル
+            'insured_person_tel_Cell':str(self.insured_person_tel_Cell),
+            # ↑ 「対象セル」⇒「被保険者電話番号」のセル
+            'consenting_doctor_name_Cell':str(self.consenting_doctor_name_Cell),
+            # ↑ 「対象セル」⇒「同意医師氏名」のセル
+            'consenting_doctor_address_Cell':str(self.consenting_doctor_address_Cell),
+            # ↑ 「対象セル」⇒「同意医師の住所」のセル
+            'consenting_year_Cell':str(self.consenting_year_Cell),
+            # ↑ 「対象セル」⇒「同意年月日」の「年」のセル
+            'consenting_month_Cell':str(self.consenting_month_Cell),
+            # ↑ 「対象セル」⇒「同意年月日」の「月」のセル
+            'consenting_day_Cell':str(self.consenting_day_Cell),
+            # ↑ 「対象セル」⇒「同意年月日」の「日」のセル
+            'consenting_incidence_name_Cell':str(self.consenting_incidence_name_Cell),
+            # ↑ 「対象セル」⇒「同意傷病名」のセル
+
+            # ※※　↓↓　これ以降は、コピペ元のセルの値がnullだったときに、コピペ先のセルの数式をdeleteしておくセル
+            
+            #　はりきゅう編
+            'one_therapy_Cell':str(self.one_therapy_Cell),
+            # ↑ 「対象セル」⇒「施術の種類1術」の「回数」のセル
+            'two_therapy_Cell':str(self.two_therapy_Cell),
+            # ↑ 「対象セル」⇒「施術の種類2術」の「回数」のセル
+            'e_therapy_addition_Cell':str(self.e_therapy_addition_Cell),
+            # ↑ 「対象セル」⇒「電療料加算」の「回数」のセル
+
+            #　マッサージ編
+            'massage_part_trunk_Cell':str(self.massage_part_trunk_Cell),
+            # ↑ 「対象セル」⇒「同意部位躯幹」の「回数」のセル
+            'massage_part_Rarm_Cell':str(self.massage_part_Rarm_Cell),
+            # ↑ 「対象セル」⇒「同意部位右上肢」の「回数」のセル
+            'massage_part_Larm_Cell':str(self.massage_part_Larm_Cell),
+            # ↑ 「対象セル」⇒「同意部位左上肢」の「回数」のセル
+            'massage_part_Rleg_Cell':str(self.massage_part_Rleg_Cell),
+            # ↑ 「対象セル」⇒「同意部位右下肢」の「回数」のセル
+            'massage_part_Lleg_Cell':str(self.massage_part_Lleg_Cell),
+            # ↑ 「対象セル」⇒「同意部位左下肢」の「回数」のセル
+            'heat_therapy_addition_Cell':str(self.heat_therapy_addition_Cell),
+            # ↑ 「対象セル」⇒「温罨法加算」の「回数」のセル
+            'heat_e_therapy_addition_Cell':str(self.heat_e_therapy_addition_Cell),
+            # ↑ 「対象セル」⇒「温罨法電気光線器具加算」の「回数」のセル
+            'manual_corrective_manipulation_addition_Rarm_Cell':str(self.manual_corrective_manipulation_addition_Rarm_Cell),
+            # ↑ 「対象セル」⇒「変形徒手矯正術右上肢」の「回数」のセル
+            'manual_corrective_manipulation_addition_Larm_Cell':str(self.manual_corrective_manipulation_addition_Larm_Cell),
+            # ↑ 「対象セル」⇒「変形徒手矯正術左上肢」の「回数」のセル
+            'manual_corrective_manipulation_addition_Rleg_Cell':str(self.manual_corrective_manipulation_addition_Rleg_Cell),
+            # ↑ 「対象セル」⇒「変形徒手矯正術右下肢」の「回数」のセル
+            'manual_corrective_manipulation_addition_Lleg_Cell':str(self.manual_corrective_manipulation_addition_Lleg_Cell),
+            # ↑ 「対象セル」⇒「変形徒手矯正術左下肢」の「回数」のセル
+
+            # はりきゅう　マッサージ共通
+            'special_area_addition_Cell':str(self.special_area_addition_Cell),
+                }
+
+
+def get_dic_schCond2calAttr2():
+        return{
+        'insurerNoLast_Cell':'insurer_No_Str',
+        'insuraCodeNo_Cell':'insuraCodeNo_Str',
+        'name_Cell':'name_nospace',
+        'nameKana_Cell':'nameKana',
+        
+        'first_consultation_fee_Cell':'first_consultation_fee', 
+        'amount_Cell':'amount_Str',  
+        'copayment_Cell':'copayment_Str',  
+        'billingAmount_Cell':'billingAmount_Str',  
+        'relationship_Cell':'relationship',  
+        'therapistName_Cell':'therapistName',
+        'treatmentHosName_Cell':'treatmentHosName',
+        'registerNo_Cell':'registerNo_Str', 
+        'birthday_year_Cell':'birthday_year',
+        'birthday_month_Cell' :'birthday_month',
+        'birthday_day_Cell' :'birthday_day',
+        'incidence_year_Cell':'incidence_year',
+        # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「年」のセル
+        'incidence_month_Cell':'incidence_month',
+        # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「月」のセル
+        'incidence_day_Cell':'incidence_day',
+        # ↑ 「対象セル」⇒「発病又は負傷した年月日」の「日」のセル
+        'incidence_name_cause_progress_Cell':'incidence_name_cause_progress',
+        # ↑ 「対象セル」⇒「傷病名、発症又は負傷の原因及びその経過」のセル
+        'first_therapy_era_name_Cell':'first_therapy_era_name',
+        # ↑ 「対象セル」⇒「初療年月日」の「元号」のセル
+        'first_therapy_year_Cell':'first_therapy_year',
+        # ↑ 「対象セル」⇒「初療年月日」の「年」のセル
+        'first_therapy_month_Cell':'first_therapy_month',
+        # ↑ 「対象セル」⇒「初療年月日」の「月」のセル
+        'first_therapy_day_Cell':'first_therapy_day',
+        # ↑ 「対象セル」⇒「初療年月日」の「日」のセル
+        'incidence_name_other_Cell':'incidence_name_other',
+        # ↑ 「対象セル」⇒「傷病名」の「その他」のカッコ内のセル
+
+        'summary_Cell':'summary',
+        # ↑ 「対象セル」⇒「摘要」のセル
+        'copayment_percentage_Cell':'copayment_percentage',
+        # ↑ 「対象セル」⇒「一部負担金割合」のセル
+        'treatment_hos_address_no1_Cell':'treatment_hos_address_no1',
+        # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最初の3桁」のセル
+        'treatment_hos_address_no2_Cell':'treatment_hos_address_no2',
+        # ↑ 「対象セル」⇒「施術所所在地郵便番号」の「最後の4桁」のセル
+        'treatment_hos_tel_Cell':'treatment_hos_tel',
+        # ↑ 「対象セル」⇒「施術所電話番号」のセル
+        'treatmentHosAddress_Cell':'treatmentHosAddress',
+        # ↑ 「対象セル」⇒「申請欄」の「施術所住所」のセル
+        'representative_insurer_Cell':'representative_insurer',
+        # ↑ 「対象セル」⇒「申請欄保険者代表者」のセル
+        'insurer_name_Cell':'insurer_name',
+        # ↑ 「対象セル」⇒「申請欄保険者名（欄外）」のセル
+        'insured_person_address_no1_Cell':'insured_person_address_no1',
+        # ↑ 「対象セル」⇒「被保険者郵便番号」の「最初の3桁」のセル
+        'insured_person_address_no2_Cell':'insured_person_address_no2',
+        # ↑ 「対象セル」⇒「被保険者郵便番号」の「最後の4桁」のセル
+        'insured_person_address_Cell':'insured_person_address',
+        # ↑ 「対象セル」⇒「被保険者住所」のセル
+        'insured_person_name_Cell':'insured_person_name',
+        # ↑ 「対象セル」⇒「被保険者氏名」のセル
+        'insured_person_tel_Cell':'insured_person_tel',
+        # ↑ 「対象セル」⇒「被保険者電話番号」のセル
+        'consenting_doctor_name_Cell':'consenting_doctor_name',
+        # ↑ 「対象セル」⇒「同意医師氏名」のセル
+        'consenting_doctor_address_Cell':'consenting_doctor_address',
+        # ↑ 「対象セル」⇒「同意医師の住所」のセル
+        'consenting_year_Cell':'consenting_year',
+        # ↑ 「対象セル」⇒「同意年月日」の「年」のセル
+        'consenting_month_Cell':'consenting_month',
+        # ↑ 「対象セル」⇒「同意年月日」の「月」のセル
+        'consenting_day_Cell':'consenting_day',
+        # ↑ 「対象セル」⇒「同意年月日」の「日」のセル
+        'consenting_incidence_name_Cell':'consenting_incidence_name',
+        # ↑ 「対象セル」⇒「同意傷病名」のセル
+
+        # ※※　↓↓　これ以降は、コピペ元のセルの値がnullだったときに、コピペ先のセルの数式をdeleteしておくセル
+        
+        #　はりきゅう編
+        'one_therapy_Cell':'one_therapy',
+        # ↑ 「対象セル」⇒「施術の種類1術」の「回数」のセル
+        'two_therapy_Cell':'two_therapy',
+        # ↑ 「対象セル」⇒「施術の種類2術」の「回数」のセル
+        'e_therapy_addition_Cell':'e_therapy_addition',
+        # ↑ 「対象セル」⇒「電療料加算」の「回数」のセル
+
+        #　マッサージ編
+        'massage_part_trunk_Cell':'massage_part_trunk',
+        # ↑ 「対象セル」⇒「同意部位躯幹」の「回数」のセル
+        'massage_part_Rarm_Cell':'massage_part_Rarm',
+        # ↑ 「対象セル」⇒「同意部位右上肢」の「回数」のセル
+        'massage_part_Larm_Cell':'massage_part_Larm',
+        # ↑ 「対象セル」⇒「同意部位左上肢」の「回数」のセル
+        'massage_part_Rleg_Cell':'massage_part_Rleg',
+        # ↑ 「対象セル」⇒「同意部位右下肢」の「回数」のセル
+        'massage_part_Lleg_Cell':'massage_part_Lleg',
+        # ↑ 「対象セル」⇒「同意部位左下肢」の「回数」のセル
+        'heat_therapy_addition_Cell':'heat_therapy_addition',
+        # ↑ 「対象セル」⇒「温罨法加算」の「回数」のセル
+        'heat_e_therapy_addition_Cell':'heat_e_therapy_addition',
+        # ↑ 「対象セル」⇒「温罨法電気光線器具加算」の「回数」のセル
+        'manual_corrective_manipulation_addition_Rarm_Cell':'manual_corrective_manipulation_addition_Rarm',
+        # ↑ 「対象セル」⇒「変形徒手矯正術右上肢」の「回数」のセル
+        'manual_corrective_manipulation_addition_Larm_Cell':'manual_corrective_manipulation_addition_Larm',
+        # ↑ 「対象セル」⇒「変形徒手矯正術左上肢」の「回数」のセル
+        'manual_corrective_manipulation_addition_Rleg_Cell':'manual_corrective_manipulation_addition_Rleg',
+        # ↑ 「対象セル」⇒「変形徒手矯正術右下肢」の「回数」のセル
+        'manual_corrective_manipulation_addition_Lleg_Cell':'manual_corrective_manipulation_addition_Lleg',
+        # ↑ 「対象セル」⇒「変形徒手矯正術左下肢」の「回数」のセル
+
+        # はりきゅう　マッサージ共通
+        
+        'special_area_addition_Cell':'special_area_addition',
+
+        
+          
+    }
+
+
 #検索の条件をDBのSearchテーブルから引き出す
 
 def get_search_condition():
     Session = sessionmaker(bind=engine)
     ses = Session()
     re = ses.query(Search_condition).all()
+    conditions = get_by_list(re)
+    ses.close()# 終わったら必ずセッションを閉じておかないと、SQLalchemy内でのエラーが出る（それでも動作は完遂してくれるが）
+    return conditions
+
+#2026年7月からの「新書式」の検索の条件をDBのSearchテーブルから引き出す
+
+def get_search_condition2():
+    Session = sessionmaker(bind=engine)
+    ses = Session()
+    re = ses.query(Search_condition2).all()
     conditions = get_by_list(re)
     ses.close()# 終わったら必ずセッションを閉じておかないと、SQLalchemy内でのエラーが出る（それでも動作は完遂してくれるが）
     return conditions
@@ -708,3 +1137,36 @@ def KentanD_obj_furiwake_kenshikai(KentanD_obj,target_sheet):
 def my_round(val, digit=0):
     p = 10 ** digit
     return (val * p * 2 + 1) // 2 / p
+
+def new_style_copy_paste_each_sheet(cd2,loadd,sc2cadic2,target_sheet):
+    
+    for ld in loadd:
+        for sC,cA in sc2cadic2.items():
+            if ld == cA:
+                for cd in cd2 :
+                    if cd == sC:
+                        if cd2[sC] !='pass':
+                            if 'insurer_No_Str' in cA:
+                                n=0
+                                for char in reversed(loadd[ld]):
+                                    #pprint.pprint('kenshikai_month_f{}'.format(kenshikai_month_f))    
+                                    #  ↑　保険者番号を末尾から読み取り、その文字数だけループする
+                                    #　↓　'insurerNo_CellStep'（例　-6）の規則に従ってズレて入力していく
+                                    target_sheet.cell(get_cellno_2list(cd2[sC])[0],\
+                                    get_cellno_2list(cd2[sC])[1]+n*cd2['insurerNo_CellStep']).value =char 
+                                    n+=1
+                            elif loadd[ld]=='Thru':
+                                #セルに空の値を入力する
+                                target_sheet.cell(get_cellno_2list(cd2[sC])[0],\
+                                get_cellno_2list(cd2[sC])[1]).value = '' 
+
+                            elif loadd[ld]=='False':
+                                #セルになにも入力しない
+                                pass
+                            
+                            else:
+                                #データがあれば、新書式から読み込んだ値を入力する
+                                target_sheet.cell(get_cellno_2list(cd2[sC])[0],\
+                                get_cellno_2list(cd2[sC])[1]).value = loadd[ld] 
+
+                        
