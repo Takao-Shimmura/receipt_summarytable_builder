@@ -33,7 +33,7 @@ Index
     <!-- 但し、↑参照HPでは<form>~</form>で括っているが、1行目を<div class="form-group"> -->
     <!-- 最終行を</div>  で括らないと、SPAとして動作しない（index/?file=）となってしまう。 -->
 <div><!-- ←　この最初のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
-  <p class="h6 text-right" >最終更新日　2025/10/01</p>
+  <p class="h6 text-right" >最終更新日　2023/9/29</p>
     <!-- 切り替えタブ部分 -->
   <ul class="nav nav-tabs" role="tablist">
     <!-- １つ目のタブ -->
@@ -59,16 +59,9 @@ Index
     <!-- ５つ目のタブ -->
     <li class="nav-item">
       <a class="nav-link"  href="#fifth"
-          data-toggle="tab" role="tab">新申請書 入力マニュアル動画</a>
-    </li>
-  
-    <!-- ６つ目のタブ -->
-    <li class="nav-item">
-      <a class="nav-link"  href="#sixth"
           data-toggle="tab" role="tab">お問い合わせ</a>
     </li>
   </ul>
-  
 
   <div class="tab-content"><!-- タブコンテンツの開始 -->
       <!-- １つ目のコンテンツ -->
@@ -169,7 +162,7 @@ Index
                               以下を確認して「申請書作成」ボタンを押してください
                           </h4>
                           <small class="form-text text-muted ">
-                                ※必要であれば修正してください<br>（特に「年」「月」に注意！）
+                                ※必要であれば修正して、ボタンを押してください<br>（特に「年」「月」に注意！）
                           </small>
                 </div>
                 <!--↓ bootstrapで　要素を横に並べるやり方は・・・-->
@@ -179,29 +172,23 @@ Index
                               <label class="col-2" for="year">令和</label>
                               <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="year_vm"><label for="year">年</label>
                               <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="month_vm"><label for="month">月 施術分</label>
-                  </div>   
-                  
-                  <div class="form-group form-inline">
-                              <label class="col-2" for="year">令和</label>
-                              <input type="number"  class="form-control  col-2" id="year" name="year_n" v-model="kenshikai_year_vm"><label for="year">年</label>
-                              <input type="number"  class="form-control  col-2" id="month" name="month_n" v-model="kenshikai_month_vm"><label for="month">月 県師会に提出</label>
-                  </div>   
+                  </div>           
                 
-                  <div class="form-group  form-inline">
-                              <label class="col-3" for="therapist">施術者名</label>
+                  <div class="form-group row">
+                              <label class="col-5" for="therapist">施術者名</label>
                               <input type="text"  class="form-control  col-6" id="therapist" name="therapist_n" v-model="therapistName_vm">
                   </div>
-                  <div class="form-group  form-inline">
-                              <label class="col-3 " for="treatmentHos">施術所名</label>
+                  <div class="form-group row">
+                              <label class="col-5" for="treatmentHos">施術所名</label>
                               <input type="text"  class="form-control  col-6" id="treatmentHos" name="treatmentHos_n" v-model="treatmentHosName_vm">
                   </div>
-                  <div class="form-group  form-inline">
-                              <label class="col-3" for="registerNo">登録記号・番号</label>
+                  <div class="form-group row">
+                              <label class="col-5" for="registerNo">登録記号・番号</label>
                               <input type="text"  class="form-control  col-6" id="registerNo" name="registerNo_S" v-model="registerNo_Str_vm">
                   </div>
-                  <div class="form-group  form-inline ms-5">
-                    <button type="submit"  class="btn btn-primary col-3" v-on:click="read_file2nd">申請書作成</button>
-                    <button type="cancel"  class="btn btn-outline-secondary col-2" onclick="javascript:window.location.reload()">取消</button>
+                  <div class="form-group">
+                    <button type="submit"  class="btn btn-primary" v-on:click="read_file2nd">申請書作成</button>
+                    <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
                     <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
                     ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
                     参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -329,22 +316,7 @@ Index
     <div class="alert alert-primary">
       更新履歴<br>
     </div>
-    2025/10/01　山形県の市町村や後期高齢者広域連合の総括票Ⅰを「山形県国保団連」ではなく、各市町村および後期高齢者広域連合に変更した<br>
-    2024/10/30　「旧書式 申請書」や「県障」のシートが読み込めなくなる不具合を解消<br>
-    2024/10/19　「登録済み保険者」において、「全国健康保険協会　茨城支部」を追加<br>
-    2024/10/17　「新申請書」でも総括票が作成できるように、当ホームページを対応させた。
-
-    <br>
-    2024/10/16　「新申請書 入力マニュアル動画」タブにおいて、<br>
-    「はりきゅう／マッサージ申請書（2024年10月~） 入力マニュアルVer10月8日」を更新
-    <br>
-    2024/09/21　「新申請書 入力マニュアル動画」タブを追加
-    <br>
-    2024/04/25　「登録済み保険者」において、「京都府後期高齢者医療広域連合」を追加
-    <br>
-      2024/01/24　「県師会　総括票」において、「提出月」を調整できる機能を追加
-    <br>
-      2023/09/29　「登録済み保険者」において、「関東 ITソフトウェア健康保険組合」
+      2023/09/29　「登録済み保険者」において、「関東 ITソフトウェア健康保険組合」を追加
       <br>
       2022/08/30　「総括票」の金額において、小数点以下が四捨五入されず、申請書の金額と異なってしまう不具合を解消
       <br>
@@ -642,43 +614,10 @@ Index
   <div class="tab-pane fade" id="fifth" role="tabpanel">
     <br>
     <div class="alert alert-primary">
-      １）はりきゅう申請書（2024年10月~） 入力マニュアルVer10月8日
-    </div>
-
-    <div class="embed-responsive embed-responsive-16by9">
-      <!-- ↓youtube 貼り付け　参考⇒https://qumeru.com/magazine/434-->
-      <!-- youtube 自動再生　autoplay=1 参考⇒https://richka.co/times/19703/
-      ただし、上記だけではダメ　mute=1 参考⇒https://web.runland.co.jp/blog_cate2/post-1740
-      youtube ループ再生　loop=1 だけではダメで、playlist=YouTubeIDも設定　参考⇒https://www.manicyouth.jp/youtube-embed-cannnot-loop/ -->
-      <!-- <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/15-JaD33oLo?autoplay=1&mute=1&loop=1&playlist=15-JaD33oLo"></iframe> -->
-      <!-- ↓　結局、web回線に負担がかかるので、autoplayもloopも設定せず -->
-      <!-- 全画面表示を可能にするにはallowfullscreenを入れる -->
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/VEt5cB8Orlc?si=ka88ypdeoPsb-rrk" allowfullscreen></iframe>
-    </div>
-  
-    <br>
-    <div class="alert alert-primary">
-      ２）マッサージ申請書（2024年10月~） 入力マニュアルVer10月8日
-    </div>
-
-    <div class="embed-responsive embed-responsive-16by9">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/Lp_ElslR3W0?si=lK3_GsebX6mZaO2V"  allowfullscreen></iframe>
-    </div>
-
-    <br>
-  </div><!-- ５つ目のコンテンツ 終了-->
-
-    <!-- ６つ目のコンテンツ -->
-  <div class="tab-pane fade" id="sixth" role="tabpanel">
-    <br>
-    <div class="alert alert-primary">
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSck4xcocnS7kUdR5hZJQ5M4UoT--fE9RYsKP2veevWHys_M6g/viewform?usp=sf_link">⇒仮設のお問い合わせフォームへ</a>
     </div>
 
-  </div><!-- ６つ目のコンテンツ 終了-->
-
-
-
+  </div><!-- ５つ目のコンテンツ 終了-->
 </div><!-- タブコンテンツ 全体の終了-->
 </div><!-- ←　この最後のdivは、必要！！・・でないと、モーダルダイアログyear_month Dialogが出てこない -->
 <!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->    
@@ -708,7 +647,7 @@ d.sort(function(a,b){
     return 0;
 });
 
-//console.log(d) 
+console.log(d) 
 
 //database view
 
@@ -723,8 +662,6 @@ Vue.component('mycomp', {
                 //　そうでないと、バックエンドのpython側に渡したときにうまく認識してくれない
                 year_vm:'',
                 month_vm:'', 
-                kenshikai_year_vm:'',//県師会の総括票に入れ込む　令和？年　
-                kenshikai_month_vm:'', //県師会の総括票に入れ込む　？月　提出・・・施術した月ではなく、提出する月
                 therapistName_vm:'', 
                 treatmentHosName_vm:'', 
                 registerNo_Str_vm:'', 
@@ -796,15 +733,6 @@ Vue.component('mycomp', {
                       //込めてはじめて、year_month_dialogに遷移するためのもの
                       self.year_vm = data['year_Int'] ;
                       self.month_vm = data['month_Int'] ;
-                      if(data['month_Int'] == 12){
-                        self.kenshikai_year_vm=data['year_Int'] +1 ;
-                        self.kenshikai_month_vm=1 ;
-                      } else{
-                        self.kenshikai_year_vm=data['year_Int'] ;
-                        self.kenshikai_month_vm=data['month_Int']+1 ;
-
-                      }
-                      
                       self.therapistName_vm= data['therapistName'] ;
                       self.treatmentHosName_vm= data['treatmentHosName'] ;
                       self.registerNo_Str_vm= data['registerNo_Str']; 
@@ -843,8 +771,6 @@ Vue.component('mycomp', {
         formData.append('dialogFlg', this.dialog_flg);
         formData.append('year_fixed', this.year_vm);
         formData.append('month_fixed', this.month_vm);
-        formData.append('kenshikai_year_fixed', this.kenshikai_year_vm);
-        formData.append('kenshikai_month_fixed', this.kenshikai_month_vm);
         formData.append('therapistName_fixed', this.therapistName_vm);
         formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
         formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
@@ -879,7 +805,7 @@ Vue.component('mycomp', {
          },
         error:function(request,status,err){
         
-          self.title_msg='作成　失敗(1)';
+          self.title_msg='作成　失敗';
           self.resetButtonFlg = 'True';
         }
         });
@@ -897,8 +823,6 @@ Vue.component('mycomp', {
         formData.append('kentanErrData', JSON.stringify(this.kentanErrData));
         formData.append('year_fixed', this.year_vm);
         formData.append('month_fixed', this.month_vm);
-        formData.append('kenshikai_year_fixed', this.kenshikai_year_vm);
-        formData.append('kenshikai_month_fixed', this.kenshikai_month_vm);
         formData.append('therapistName_fixed', this.therapistName_vm);
         formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
         formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
@@ -930,7 +854,7 @@ Vue.component('mycomp', {
          },
         error:function(request,status,err){
         
-          self.title_msg='作成　失敗（2）';
+          self.title_msg='作成　失敗';
           self.resetButtonFlg = 'True';
         }
         });
