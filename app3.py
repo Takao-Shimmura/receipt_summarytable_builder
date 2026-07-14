@@ -1233,6 +1233,12 @@ if __name__=='__main__':
     app.debug = True
 
     # ↓　サーバーにデプロイして公開するためのもの
-    app.run(host='0.0.0.0')
+    ###app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
     ###app.run(host='localhost')
+
+    # 2026年7月14日より　Railwayサーバーにデプロイして公開するためのもの
+    # Railwayが指定するポート番号を取得（なければデフォルト5000）
+    port = int(os.environ.get("PORT", 5000))
+    # host="0.0.0.0" にして外部からの接続を受け付ける
+    app.run(host="0.0.0.0", port=port)
