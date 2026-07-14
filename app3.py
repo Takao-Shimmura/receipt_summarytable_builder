@@ -799,9 +799,10 @@ def download():
     download_file_name=fName
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-    sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
-
+    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。download_name
+    #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
+    # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。
+    sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
     return sendingFile
 
 @app.route('/dLfileDel', methods=['GET'])
