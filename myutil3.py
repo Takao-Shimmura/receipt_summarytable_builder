@@ -1,4 +1,4 @@
-#!python3.9
+#!python3.11
 from flask import Flask, session
     #redirect, jsonify, current_app, g
 #import psycopg2
@@ -21,7 +21,15 @@ from sqlalchemy.orm.exc import NoResultFound
 #　↓　railwayのpostgreSQL接続用URI 
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
-engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+#engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+
+# （１）Railway が提供する DATABASE_URL を読み込む
+raw_url = os.environ["DATABASE_URL"]
+# （２）SQLAlchemy + psycopg 形式に書き換え
+DATABASE_URL = raw_url.replace("postgresql://", "postgresql+psycopg://")
+# （３）エンジン作成
+engine = create_engine(DATABASE_URL)
+
 
 #　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ICM_demoデータベースへの接続用URI 
 #engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ICM_demo')
