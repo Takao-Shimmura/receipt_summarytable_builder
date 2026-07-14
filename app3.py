@@ -73,7 +73,15 @@ app.secret_key = b'random string...'
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
 ###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
-engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+###engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+
+# （１）Railway が提供する DATABASE_URL を読み込む
+raw_url = os.environ["DATABASE_URL"]
+# （２）SQLAlchemy + psycopg 形式に書き換え
+DATABASE_URL = raw_url.replace("postgresql://", "postgresql+psycopg://")
+# （３）エンジン作成
+engine = create_engine(DATABASE_URL)
+
 
 # access top page.
 @app.route('/',methods=['GET'])
