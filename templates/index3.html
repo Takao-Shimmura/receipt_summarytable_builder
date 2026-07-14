@@ -716,7 +716,7 @@ Index
         <!-- Reset button  -->
         <template v-if="resetButtonFlg=='True'">
           <div class="form-group">
-            <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+            <button type="cancel"  class="btn btn-primary"  @click="resetSeventhTab">リセット</button>
             <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
             ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
             参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -816,6 +816,26 @@ Vue.component('mycomp', {
               }
     },
     methods:{
+      resetSeventhTab() {
+      // 1. 表示フラグを初期状態に戻す
+      this.formCloseFlg = 'False';
+      this.resetButtonFlg = 'False'; // または初期値
+
+      // 2. その他、このタブで使っているデータを初期化する
+      this.title_msg = '初期のメッセージ'; // 必要に応じて
+
+      // 3. ファイル入力欄（input type="file"）の選択状態をクリアする
+      const fileInput = document.getElementById('inputFile');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+      
+      // ラベルのテキストも元に戻す（Bootstrapのカスタムファイルを利用している場合）
+      const fileLabel = document.querySelector('.custom-file-label');
+      if (fileLabel) {
+        fileLabel.innerText = 'ここにファイルをドラッグ&ドロップ';
+      }
+    },
       howto_use:function(e){
         $.ajax({
             type:'GET',
