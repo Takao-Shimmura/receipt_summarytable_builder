@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.9
 from flask import Flask, session
     #redirect, jsonify, current_app, g
 #import psycopg2
