@@ -96,7 +96,7 @@ Index
                 </div>
                   <!-- </div> -->
                 <div class="input-group-append active">
-                  <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+                  <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset"  onclick="javascript:window.location.reload()">取 消</button>
                 </div>
               </div>
             </div>
@@ -158,7 +158,7 @@ Index
         <!-- Reset button  -->
         <template v-if="resetButtonFlg=='True'">
           <div class="form-group">
-            <button type="cancel"  class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
+            <button type="button" class="btn btn-primary" onclick="javascript:window.location.reload()">リセット</button>
             <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
             ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
             参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -207,7 +207,7 @@ Index
                   </div>
                   <div class="form-group  form-inline ms-5">
                     <button type="submit"  class="btn btn-primary col-3" v-on:click="read_file2nd">申請書作成</button>
-                    <button type="cancel"  class="btn btn-outline-secondary col-2" onclick="javascript:window.location.reload()">取消</button>
+                    <button type="button" class="btn btn-outline-secondary col-2" onclick="javascript:window.location.reload()">取消</button>
                     <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
                     ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
                     参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -271,7 +271,7 @@ Index
                       すべて選択されてある場合 -->
                       <button type="submit"  class="btn btn-primary" :disabled="!kentanRadioBflg" v-on:click="read_fileKentan">申請書作成</button>
                     </template>
-                      <button type="cancel"  class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
+                      <button type="button" class="btn btn-outline-secondary" onclick="javascript:window.location.reload()">取消</button>
                   </div>
                     
 
@@ -704,7 +704,7 @@ Index
                 </div>
                   <!-- </div> -->
                 <div class="input-group-append active">
-                  <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset">取 消</button>
+                  <button type="button" class="btn btn-outline-secondary input-group-text" id="inputFileReset"  onclick="javascript:window.location.reload()">取 消</button>
                 </div>
               </div>
             </div>
@@ -715,9 +715,9 @@ Index
 
         
         <!-- Reset button  -->
-        <template v-if="resetButtonFlg=='True'">
+        <template v-if="resetButtonFlg2=='True'">
           <div class="form-group">
-            <button type="cancel"  class="btn btn-primary"  @click="resetSeventhTab">リセット</button>
+            <button type="button" class="btn btn-primary"  @click="resetAndOpenTab">リセット</button>
             <!-- ↑　ダイアログで取消ボタンが押されると、「onclick="javascript:window.location.reload()"」により
             ページそのものがリロードされ、/indexに戻る（すべてリセットされる）
             参考⇒https://www.it-swarm-ja.com/ja/javascript/bootstrap-3%E3%83%A2%E3%83%BC%E3%83%80%E3%83%AB%E3%82%92%E9%96%89%E3%81%98%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AB%E3%83%9A%E3%83%BC%E3%82%B8%E3%82%92%E3%83%AA%E3%83%AD%E3%83%BC%E3%83%89%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95/1043726435/ -->
@@ -806,7 +806,8 @@ Vue.component('mycomp', {
                 errData:null,//Error Messageで表示するためのデータ。リストinリストになっている。
                 df_new2_dict:{},//pandasで読み込んだdataframeを、バックエンドであるpython側で
                 //保持しておけないので、フロントエンドであるこちら側（index2）で一時的にあずかる。
-                resetButtonFlg:'False',//リセットボタン。トップページに戻る。
+                resetButtonFlg:'False',//「トップ」　タグのリセットボタン。トップページに戻る。
+                resetButtonFlg2:'False',//「旧書式から新書式」タブのリセットボタン。トップページに戻る。
                 uploadedData:[],//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
                 uploadedErrData:[],//県単のエラーのデータ（配列　kentanダイアログを表示するために一時預かり）
                 kentanData:[],//県単のデータ（配列　「県老/県障/県親/単子_はき/マ」未分類　kentanダイアログを表示するために一時預かり）
@@ -814,30 +815,49 @@ Vue.component('mycomp', {
                 kentanOpenFlg: 'False',//県障ダイアログを開くためのフラグ
                 kentanDialogFlg: 'False',//県障ダイアログが開いたかどうかをpython側に伝えるためのフラグ
                 insurerdataList:d,
+                
               }
     },
+    mounted() {
+        //console.log('--- ページが読み込まれました (mounted) ---');
+        this.checkSavedTab();
+              },
     methods:{
-      resetSeventhTab() {
-      // 1. 表示フラグを初期状態に戻す
-      this.formCloseFlg = 'False';
-      this.resetButtonFlg = 'False'; // または初期値
+      // 1. リセットボタンが押されたときの処理
+        resetAndOpenTab() {
+          // 'activeTab' という名前で、次に開きたい7番目のタブのID（seventh）を保存
+          sessionStorage.setItem('activeTab', 'seventh');
+          
+          // ページをリロード
+          window.location.reload();
+        },
 
-      // 2. その他、このタブで使っているデータを初期化する
-      this.title_msg = '☟旧書式(申請書)のエクセルファイルを選択'; // 必要に応じて
+        // 2. リロード後に保存されたタブがあるか確認して開く処理
+        checkSavedTab() {
+                // ストレージから保存されたID（"seventh"）を取得
+            const savedTabId = sessionStorage.getItem('activeTab');
+            console.log('取得したストレージの値:', savedTabId);
+            if (savedTabId) {
+                // 削除する前にログを出す
+                sessionStorage.removeItem('activeTab');
+                console.log('ストレージを削除しました。タブの切り替えを試みます。');
 
-      // 3. ファイル入力欄（input type="file"）の選択状態をクリアする
-      /* const fileInput = document.getElementById('inputFile');
-      if (fileInput) {
-        fileInput.value = '';
-      } */
-      this.uploadFile = null;
-      
-      // ラベルのテキストも元に戻す（Bootstrapのカスタムファイルを利用している場合）
-      const fileLabel = document.querySelector('.custom-file-label');
-      if (fileLabel) {
-        fileLabel.innerText = 'ここにファイルをドラッグ&ドロップ';
-      }
-    },
+                this.$nextTick(() => {
+                  // 対象の要素（aタグ）が本当に存在するかログで確認
+                  const $targetTab = $(`a[href="#${savedTabId}"]`);
+                  console.log('対象のaタグ要素の数:', $targetTab.length);
+
+                  if ($targetTab.length > 0) {
+                    console.log('タブ切り替えを実行します。');
+                    $targetTab.tab('show');
+                  } else {
+                    console.error(`エラー: href="#${savedTabId}" を持つaタグが見つかりませんでした。`);
+                  }
+                });
+              } else {
+                console.log('保存されたタブIDはありません（通常アクセスなど）。');
+              }
+          },
       howto_use:function(e){
         $.ajax({
             type:'GET',
@@ -1040,7 +1060,7 @@ Vue.component('mycomp', {
         success:function(data){
           if (data['failed_msg'] ) {//←このif節はエラーメッセージを表示できるようにするためのもの
                         self.title_msg = data['failed_msg'] ; 
-                        self.resetButtonFlg = 'True';
+                        self.resetButtonFlg2 = 'True';
                     }else if(data['process_msg'] ){ //←このelse if節は、python側で読み込んだxlsxファイルのシートがすべて読み込めなかったときのもの
                         self.title_msg = data['process_msg'];
                         self.downloadFileName=data['dLFile'] ;
@@ -1052,14 +1072,14 @@ Vue.component('mycomp', {
                           
                     }else {
                       self.title_msg='送信失敗?';
-                      self.resetButtonFlg='True'; 
+                      self.resetButtonFlg2='True'; 
                     }
 
          },
         error:function(request,status,err){
         
           self.title_msg='送信失敗';
-          self.resetButtonFlg='True';
+          self.resetButtonFlg2='True';
         }
         });
       },
@@ -1130,6 +1150,7 @@ Vue.component('mycomp', {
         success:function(data){
               self.title_msg = data; 
               self.resetButtonFlg = 'True';
+              self.resetButtonFlg2 = 'True';
          },
         error:function(request,status,err){
         
