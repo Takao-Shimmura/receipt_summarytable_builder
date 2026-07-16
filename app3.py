@@ -799,7 +799,7 @@ def download():
     download_file_name=fName
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。download_name
+    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。
     #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
     # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。
     sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
@@ -934,11 +934,16 @@ def upload_copy_paste():
                     #　それを回避するために、df_value.shape[1] ⇒シートの最大行　＞＝　get_cellno_2list(cD['acupOrMass_Cell'])[1]⇒101行
                     #　・・・が成り立つ時だけ、読み込むように変更した。
                     if df_value.shape[1] >= get_cellno_2list(cD['acupOrMass_Cell'])[1]:
-                        # ↓　検索条件となるacupOrMass_Cell　のセル位置に　acupOrMass_Condition　に相当する値が入っているかどうかを判定している
+  
+                        # ↓　検索条件は、(1)acupOrMass_Cell　のセル位置に　acupOrMass_Condition　に相当する値が入っているかどうかを判定している
+                        #　　　　　　　　(2)name_Cell　のセル位置に　値（患者の名前）が入っている場合
                         # df_value.loc[?,?] (DataFrame.loc[?,?])は、下記を参照
                         # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
+
                         if df_value.loc[get_cellno_2list(cD['acupOrMass_Cell'])[0],\
-                            get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition']:
+                            get_cellno_2list(cD['acupOrMass_Cell'])[1]] == cD['acupOrMass_Condition'] \
+                            and not pd.isnull(df_value.loc[get_cellno_2list(cD['name_Cell'])[0],\
+                            get_cellno_2list(cD['name_Cell'])[1]]) :
                             #　↓　変数d_dicは辞書。後に一気にcalculateテーブルを更新するためのデータを入れとく
                             d_dic={}
                             d_dic['sheetName'] =dfN_Key # シート名を入れておく
