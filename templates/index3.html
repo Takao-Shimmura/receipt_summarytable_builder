@@ -826,10 +826,11 @@ Vue.component('mycomp', {
       this.title_msg = '☟旧書式(申請書)のエクセルファイルを選択'; // 必要に応じて
 
       // 3. ファイル入力欄（input type="file"）の選択状態をクリアする
-      const fileInput = document.getElementById('inputFile');
+      /* const fileInput = document.getElementById('inputFile');
       if (fileInput) {
         fileInput.value = '';
-      }
+      } */
+      this.uploadFile = null;
       
       // ラベルのテキストも元に戻す（Bootstrapのカスタムファイルを利用している場合）
       const fileLabel = document.querySelector('.custom-file-label');
