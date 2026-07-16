@@ -1166,7 +1166,7 @@ def new_style_copy_paste_each_sheet(cd2,loadd,sc2cadic2,target_sheet):
                             elif loadd[ld]=='Thru':
                                 #セルに空の値を入力する
                                 target_sheet.cell(get_cellno_2list(cd2[sC])[0],\
-                                get_cellno_2list(cd2[sC])[1]).value = '' 
+                                get_cellno_2list(cd2[sC])[1]).value = '???' 
 
                             elif loadd[ld]=='False':
                                 #セルになにも入力しない
