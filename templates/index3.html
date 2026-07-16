@@ -836,26 +836,26 @@ Vue.component('mycomp', {
         checkSavedTab() {
                 // ストレージから保存されたID（"seventh"）を取得
             const savedTabId = sessionStorage.getItem('activeTab');
-            console.log('取得したストレージの値:', savedTabId);
+            //console.log('取得したストレージの値:', savedTabId);
             if (savedTabId) {
                 // 削除する前にログを出す
                 sessionStorage.removeItem('activeTab');
-                console.log('ストレージを削除しました。タブの切り替えを試みます。');
+                //console.log('ストレージを削除しました。タブの切り替えを試みます。');
 
                 this.$nextTick(() => {
                   // 対象の要素（aタグ）が本当に存在するかログで確認
                   const $targetTab = $(`a[href="#${savedTabId}"]`);
-                  console.log('対象のaタグ要素の数:', $targetTab.length);
+                  //console.log('対象のaタグ要素の数:', $targetTab.length);
 
                   if ($targetTab.length > 0) {
-                    console.log('タブ切り替えを実行します。');
+                    //console.log('タブ切り替えを実行します。');
                     $targetTab.tab('show');
                   } else {
                     console.error(`エラー: href="#${savedTabId}" を持つaタグが見つかりませんでした。`);
                   }
                 });
               } else {
-                console.log('保存されたタブIDはありません（通常アクセスなど）。');
+                //console.log('保存されたタブIDはありません（通常アクセスなど）。');
               }
           },
       howto_use:function(e){
