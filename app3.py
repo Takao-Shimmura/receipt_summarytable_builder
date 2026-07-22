@@ -73,7 +73,7 @@ app.secret_key = b'random string...'
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
 ###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
-###engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+#engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
 
 # （１）Railway が提供する DATABASE_URL を読み込む
 raw_url = os.environ["DATABASE_URL"]
@@ -1014,7 +1014,7 @@ def upload_copy_paste():
                             for sC,cA in sC2cAdic2.items():
                             # {sC:cA}の辞書は、search conditionとcalculate attributeの略。
                             #  get_dic_schCond2calAttr2()関数で設定してある。
-                            # month,year,name_nospace,sheetname,title_AcupOrMass以外の項目を、
+                            # month,year,sheetname,title_AcupOrMass以外の項目を、
                             # 検索セルと項目のセットで辞書化したもの   
                                 try:
                                     # これから判定しなければならないdataframeの各セルのデータを以下の
@@ -1077,10 +1077,7 @@ def upload_copy_paste():
                                             or 'billingAmount_Str' in cA :
 
                                                 d_dic[cA] = 'False'  
-                                        # 患者氏名（'name_nospace' ）ならば、
-                                        # セルの値からスペースを削除して 入力する
-                                        elif 'name_nospace' in cA:
-                                            d_dic[cA] =name_delite_space(cellV1)
+                                        
                                         
                                         # ↓値がある時にはFalseにしておく⇒後々の処理でシートのセルには数値を入れず、数式を活かしておく
 
@@ -1249,7 +1246,7 @@ if __name__=='__main__':
     # ↓　サーバーにデプロイして公開するためのもの
     ###app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    ###app.run(host='localhost')
+    #app.run(host='localhost')
 
     # 2026年7月14日より　Railwayサーバーにデプロイして公開するためのもの
     # Railwayが指定するポート番号を取得（なければデフォルト5000）
