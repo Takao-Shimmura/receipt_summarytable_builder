@@ -24,6 +24,7 @@ from flask import Flask, render_template, request, session, \
     redirect, jsonify, current_app, g,send_file
 #import psycopg2
 import openpyxl # 外部ライブラリ　pip install openpyxl
+from openpyxl.worksheet.pagebreak import Break
 import pandas as pd
 #import numpy as np
 
@@ -1179,9 +1180,28 @@ def upload_copy_paste():
             if loadD['title_AcupOrMass']=='はりきゅう':
                 template_sheet = wb['ひな型　はりきゅう申請書'] 
                 # 1. シートの基本複製
+                # 1-1. シートの複製(openpyxlでシートを複製（copy_worksheet()）すると、
+                # 印刷範囲や改ページの設定が引き継がれなかったり、行の高さ等のズレが原因で改ページライン
+                # が変わってしまうことがあります。このズレを防ぐには、
+                # コピー後に改ページ・印刷範囲の設定を再定義するのが最も確実です。
+                # 1-1～1-4はそのためのコード)
                 new_sheet = wb.copy_worksheet(template_sheet)
                 new_sheet.sheet_properties.tabColor =None
                 new_sheet.title = loadD['sheetName']
+             
+                # 1-2. 印刷範囲のコピー
+                if template_sheet.print_area:
+                    new_sheet.print_area = template_sheet.print_area
+                    
+                # 1-3. 改ページ位置（行）のコピー
+                new_sheet.row_breaks = []  # 一度リセット
+                for brk in template_sheet.row_breaks:
+                    new_sheet.row_breaks.append(Break(id=brk.id))
+                    
+                # 1-4. 改ページ位置（列）のコピー
+                new_sheet.column_breaks = []
+                for brk in template_sheet.column_breaks:
+                    new_sheet.column_breaks.append(Break(id=brk.id))
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
@@ -1198,10 +1218,28 @@ def upload_copy_paste():
                 new_style_copy_paste_each_sheet(cD2,loadD,sC2cAdic2,new_sheet)
             elif loadD['title_AcupOrMass']=='マッサージ':
                 template_sheet = wb['ひな型　あんまマッサージ申請書']
-                # 1. シートの基本複製
+                # 1-1. シートの複製(openpyxlでシートを複製（copy_worksheet()）すると、
+                # 印刷範囲や改ページの設定が引き継がれなかったり、行の高さ等のズレが原因で改ページライン
+                # が変わってしまうことがあります。このズレを防ぐには、
+                # コピー後に改ページ・印刷範囲の設定を再定義するのが最も確実です。
+                # 1-1～1-4はそのためのコード)
                 new_sheet = wb.copy_worksheet(template_sheet)
                 new_sheet.sheet_properties.tabColor =None
                 new_sheet.title = loadD['sheetName']
+                
+                # 1-2. 印刷範囲のコピー
+                if template_sheet.print_area:
+                    new_sheet.print_area = template_sheet.print_area
+                    
+                # 1-3. 改ページ位置（行）のコピー
+                new_sheet.row_breaks = []  # 一度リセット
+                for brk in template_sheet.row_breaks:
+                    new_sheet.row_breaks.append(Break(id=brk.id))
+                    
+                # 1-4. 改ページ位置（列）のコピー
+                new_sheet.column_breaks = []
+                for brk in template_sheet.column_breaks:
+                    new_sheet.column_breaks.append(Break(id=brk.id))
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
