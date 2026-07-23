@@ -1217,8 +1217,7 @@ def upload_copy_paste():
                 new_sheet.page_margins.left = template_sheet.page_margins.left
                 new_sheet.page_margins.right = template_sheet.page_margins.right
                 new_sheet.page_margins.header = template_sheet.page_margins.header
-                new_sheet.page_margins.footer = template_sheet.page_margins.footer
- """
+                new_sheet.page_margins.footer = template_sheet.page_margins.footer"""
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
                     copied_dv = copy.copy(dv)  # ← copy.copy に変更
@@ -1273,19 +1272,7 @@ def upload_copy_paste():
                 new_sheet.page_margins.right = template_sheet.page_margins.right
                 new_sheet.page_margins.header = template_sheet.page_margins.header
                 new_sheet.page_margins.footer = template_sheet.page_margins.footer """
-                # 1-2. 印刷範囲のコピー
-                if template_sheet.print_area:
-                    new_sheet.print_area = template_sheet.print_area
-                    
-                # 1-3. 改ページ位置（行）のコピー
-                new_sheet.row_breaks = []  # 一度リセット
-                for brk in template_sheet.row_breaks:
-                    new_sheet.row_breaks.append(Break(id=brk.id))
-                    
-                # 1-4. 改ページ位置（列）のコピー
-                new_sheet.column_breaks = []
-                for brk in template_sheet.column_breaks:
-                    new_sheet.column_breaks.append(Break(id=brk.id))
+
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
