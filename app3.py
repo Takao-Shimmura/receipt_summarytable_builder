@@ -1193,7 +1193,7 @@ def upload_copy_paste():
                 new_sheet.title = loadD['sheetName']
 
                 
-                # 1-2. 列の幅を完全にコピー
+                """ # 1-2. 列の幅を完全にコピー
                 for col_letter, col_dim in template_sheet.column_dimensions.items():
                     new_sheet.column_dimensions[col_letter].width = col_dim.width
                     new_sheet.column_dimensions[col_letter].hidden = col_dim.hidden
@@ -1218,7 +1218,7 @@ def upload_copy_paste():
                 new_sheet.page_margins.right = template_sheet.page_margins.right
                 new_sheet.page_margins.header = template_sheet.page_margins.header
                 new_sheet.page_margins.footer = template_sheet.page_margins.footer
-
+ """
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
                     copied_dv = copy.copy(dv)  # ← copy.copy に変更
@@ -1234,15 +1234,45 @@ def upload_copy_paste():
                 new_style_copy_paste_each_sheet(cD2,loadD,sC2cAdic2,new_sheet)
             elif loadD['title_AcupOrMass']=='マッサージ':
                 template_sheet = wb['ひな型　あんまマッサージ申請書']
-                # 1-1. シートの複製(openpyxlでシートを複製（copy_worksheet()）すると、
-                # 印刷範囲や改ページの設定が引き継がれなかったり、行の高さ等のズレが原因で改ページライン
-                # が変わってしまうことがあります。このズレを防ぐには、
-                # コピー後に改ページ・印刷範囲の設定を再定義するのが最も確実です。
-                # 1-1～1-4はそのためのコード)
+                # 1. シートの基本複製
+                # 1-1. シートの複製(Excelが自動で入れる自動改ページ（破線）がズレる原因は、
+                # シート複製時に「行の高さ」「列の幅」のデータが一部脱落し、Excelがページ内に
+                # 収まる行数を再計算してしまうためです。自動改ページの位置を完全に一致させるには、
+                # 複製したシートのすべての行の高さ・列の幅を明示的にコピーし、
+                # さらに印刷倍率（Scale）やページ設定のプロパティも同期させる必要があります。
+                # 解決コード以下のコードは、シートの複製後に「行高・列幅」と「印刷設定」を
+                # 完全にコピーする関数です。
+                # 1-1～1-5はそのためのコード)
                 new_sheet = wb.copy_worksheet(template_sheet)
                 new_sheet.sheet_properties.tabColor =None
                 new_sheet.title = loadD['sheetName']
+
                 
+                """ # 1-2. 列の幅を完全にコピー
+                for col_letter, col_dim in template_sheet.column_dimensions.items():
+                    new_sheet.column_dimensions[col_letter].width = col_dim.width
+                    new_sheet.column_dimensions[col_letter].hidden = col_dim.hidden
+
+                # 1-3. 行の高さを完全にコピー
+                for row_idx, row_dim in template_sheet.row_dimensions.items():
+                    new_sheet.row_dimensions[row_idx].height = row_dim.height
+                    new_sheet.row_dimensions[row_idx].hidden = row_dim.hidden
+
+                # 1-4. ページ設定・印刷倍率のコピー
+                new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
+                new_sheet.page_setup.paperSize = template_sheet.page_setup.paperSize
+                new_sheet.page_setup.scale = template_sheet.page_setup.scale
+                new_sheet.page_setup.fitToWidth = template_sheet.page_setup.fitToWidth
+                new_sheet.page_setup.fitToHeight = template_sheet.page_setup.fitToHeight
+                new_sheet.page_setup.fitToPage = template_sheet.page_setup.fitToPage
+                
+                # 1-5. 余白（マージン）のコピー
+                new_sheet.page_margins.top = template_sheet.page_margins.top
+                new_sheet.page_margins.bottom = template_sheet.page_margins.bottom
+                new_sheet.page_margins.left = template_sheet.page_margins.left
+                new_sheet.page_margins.right = template_sheet.page_margins.right
+                new_sheet.page_margins.header = template_sheet.page_margins.header
+                new_sheet.page_margins.footer = template_sheet.page_margins.footer """
                 # 1-2. 印刷範囲のコピー
                 if template_sheet.print_area:
                     new_sheet.print_area = template_sheet.print_area
