@@ -21,7 +21,7 @@ from sqlalchemy.orm.exc import NoResultFound
 #　↓　railwayのpostgreSQL接続用URI 
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
-###engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+#engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
 
 # （１）Railway が提供する DATABASE_URL を読み込む
 raw_url = os.environ["DATABASE_URL"]

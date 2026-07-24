@@ -74,7 +74,7 @@ app.secret_key = b'random string...'
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
 ###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
-#engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+###engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
 
 # （１）Railway が提供する DATABASE_URL を読み込む
 raw_url = os.environ["DATABASE_URL"]
@@ -800,10 +800,10 @@ def download():
     download_file_name=fName
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。
-    #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
-    # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。
-    sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
+    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。(Shim Towerはこちら)
+    sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
+    # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。(Lenovo PCはこちら)
+    #sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
     return sendingFile
 
 @app.route('/dLfileDel', methods=['GET'])
@@ -1180,6 +1180,10 @@ def upload_copy_paste():
             if loadD['title_AcupOrMass']=='はりきゅう':
                 template_sheet = wb['ひな型　はりきゅう申請書'] 
                 # 1. シートの基本複製
+                
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor = None
+                new_sheet.title = loadD['sheetName']
                 # 1-1. シートの複製(Excelが自動で入れる自動改ページ（破線）がズレる原因は、
                 # シート複製時に「行の高さ」「列の幅」のデータが一部脱落し、Excelがページ内に
                 # 収まる行数を再計算してしまうためです。自動改ページの位置を完全に一致させるには、
@@ -1187,37 +1191,24 @@ def upload_copy_paste():
                 # さらに印刷倍率（Scale）やページ設定のプロパティも同期させる必要があります。
                 # 解決コード以下のコードは、シートの複製後に「行高・列幅」と「印刷設定」を
                 # 完全にコピーする関数です。
-                # 1-1～1-5はそのためのコード)
-                new_sheet = wb.copy_worksheet(template_sheet)
-                new_sheet.sheet_properties.tabColor =None
-                new_sheet.title = loadD['sheetName']
+                # 1-1～1-4はそのためのコード)
 
-                
-                """ # 1-2. 列の幅を完全にコピー
-                for col_letter, col_dim in template_sheet.column_dimensions.items():
-                    new_sheet.column_dimensions[col_letter].width = col_dim.width
-                    new_sheet.column_dimensions[col_letter].hidden = col_dim.hidden
+                # 1-1 openpyxlのバグ対策（親参照の再設定）
+                template_sheet.page_setup._parent = template_sheet
+                new_sheet.page_setup._parent = new_sheet
 
-                # 1-3. 行の高さを完全にコピー
-                for row_idx, row_dim in template_sheet.row_dimensions.items():
-                    new_sheet.row_dimensions[row_idx].height = row_dim.height
-                    new_sheet.row_dimensions[row_idx].hidden = row_dim.hidden
-
-                # 1-4. ページ設定・印刷倍率のコピー
+                # 1-2--- ページ設定・印刷設定のコピーと最適化 ---
                 new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
                 new_sheet.page_setup.paperSize = template_sheet.page_setup.paperSize
-                new_sheet.page_setup.scale = template_sheet.page_setup.scale
-                new_sheet.page_setup.fitToWidth = template_sheet.page_setup.fitToWidth
-                new_sheet.page_setup.fitToHeight = template_sheet.page_setup.fitToHeight
-                new_sheet.page_setup.fitToPage = template_sheet.page_setup.fitToPage
                 
-                # 1-5. 余白（マージン）のコピー
-                new_sheet.page_margins.top = template_sheet.page_margins.top
-                new_sheet.page_margins.bottom = template_sheet.page_margins.bottom
-                new_sheet.page_margins.left = template_sheet.page_margins.left
-                new_sheet.page_margins.right = template_sheet.page_margins.right
-                new_sheet.page_margins.header = template_sheet.page_margins.header
-                new_sheet.page_margins.footer = template_sheet.page_margins.footer"""
+                # 1-3★自動改ページ対策：スケール（倍率）を一旦クリアし、フィット設定を強制有効化する
+                new_sheet.page_setup.scale = None  # Scaleが設定されているとfitToWidthが無視されます
+                new_sheet.page_setup.fitToWidth = 1  # 横幅を必ず1ページに収める（※縦を収めたいならfitToHeight=1）
+                new_sheet.page_setup.fitToHeight = 0 # 0は「縦方向は制限せず自動で次のページへ流す」設定
+                
+                # 1-4★Excelに「フィット設定を使ってね」と認識させる最重要スイッチ
+                new_sheet.sheet_properties.pageSetUpPr.fitToPage = True
+
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
                     copied_dv = copy.copy(dv)  # ← copy.copy に変更
@@ -1234,6 +1225,10 @@ def upload_copy_paste():
             elif loadD['title_AcupOrMass']=='マッサージ':
                 template_sheet = wb['ひな型　あんまマッサージ申請書']
                 # 1. シートの基本複製
+                                
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor = None
+                new_sheet.title = loadD['sheetName']
                 # 1-1. シートの複製(Excelが自動で入れる自動改ページ（破線）がズレる原因は、
                 # シート複製時に「行の高さ」「列の幅」のデータが一部脱落し、Excelがページ内に
                 # 収まる行数を再計算してしまうためです。自動改ページの位置を完全に一致させるには、
@@ -1241,37 +1236,23 @@ def upload_copy_paste():
                 # さらに印刷倍率（Scale）やページ設定のプロパティも同期させる必要があります。
                 # 解決コード以下のコードは、シートの複製後に「行高・列幅」と「印刷設定」を
                 # 完全にコピーする関数です。
-                # 1-1～1-5はそのためのコード)
-                new_sheet = wb.copy_worksheet(template_sheet)
-                new_sheet.sheet_properties.tabColor =None
-                new_sheet.title = loadD['sheetName']
-
+                # 1-1～1-4はそのためのコード)
                 
-                """ # 1-2. 列の幅を完全にコピー
-                for col_letter, col_dim in template_sheet.column_dimensions.items():
-                    new_sheet.column_dimensions[col_letter].width = col_dim.width
-                    new_sheet.column_dimensions[col_letter].hidden = col_dim.hidden
+                # 1-1 openpyxlのバグ対策（親参照の再設定）
+                template_sheet.page_setup._parent = template_sheet
+                new_sheet.page_setup._parent = new_sheet
 
-                # 1-3. 行の高さを完全にコピー
-                for row_idx, row_dim in template_sheet.row_dimensions.items():
-                    new_sheet.row_dimensions[row_idx].height = row_dim.height
-                    new_sheet.row_dimensions[row_idx].hidden = row_dim.hidden
-
-                # 1-4. ページ設定・印刷倍率のコピー
+                # 1-2--- ページ設定・印刷設定のコピーと最適化 ---
                 new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
                 new_sheet.page_setup.paperSize = template_sheet.page_setup.paperSize
-                new_sheet.page_setup.scale = template_sheet.page_setup.scale
-                new_sheet.page_setup.fitToWidth = template_sheet.page_setup.fitToWidth
-                new_sheet.page_setup.fitToHeight = template_sheet.page_setup.fitToHeight
-                new_sheet.page_setup.fitToPage = template_sheet.page_setup.fitToPage
                 
-                # 1-5. 余白（マージン）のコピー
-                new_sheet.page_margins.top = template_sheet.page_margins.top
-                new_sheet.page_margins.bottom = template_sheet.page_margins.bottom
-                new_sheet.page_margins.left = template_sheet.page_margins.left
-                new_sheet.page_margins.right = template_sheet.page_margins.right
-                new_sheet.page_margins.header = template_sheet.page_margins.header
-                new_sheet.page_margins.footer = template_sheet.page_margins.footer """
+                # 1-3★自動改ページ対策：スケール（倍率）を一旦クリアし、フィット設定を強制有効化する
+                new_sheet.page_setup.scale = None  # Scaleが設定されているとfitToWidthが無視されます
+                new_sheet.page_setup.fitToWidth = 1  # 横幅を必ず1ページに収める（※縦を収めたいならfitToHeight=1）
+                new_sheet.page_setup.fitToHeight = 0 # 0は「縦方向は制限せず自動で次のページへ流す」設定
+                
+                # 1-4★Excelに「フィット設定を使ってね」と認識させる最重要スイッチ
+                new_sheet.sheet_properties.pageSetUpPr.fitToPage = True
 
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
