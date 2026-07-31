@@ -817,8 +817,7 @@ Vue.component('mycomp', {
                 //ajax通信するときに用意しておかなければならない⇒を参照　http://tech.aainc.co.jp/archives/10714
                 errOpenFlg: 'False',//Error Messageページを開くためのフラグ
                 errData:null,//Error Messageで表示するためのデータ。リストinリストになっている。
-                df_new2_dict:{},//pandasで読み込んだdataframeを、バックエンドであるpython側で
-                //保持しておけないので、フロントエンドであるこちら側（index2）で一時的にあずかる。
+                
                 resetButtonFlg:'False',//「トップ」　タグのリセットボタン。トップページに戻る。
                 resetButtonFlg2:'False',//「旧書式から新書式」タブのリセットボタン。トップページに戻る。
                 uploadedData:[],//県単のデータ（配列 kentanダイアログを表示するために一時預かり）
@@ -912,9 +911,9 @@ Vue.component('mycomp', {
                         //ダウンロードに移る。そのためにload_file()を呼び出す。
                         //$.ajaxのなかにaxiosがネストされた状態
 
-                    }else if(data['df_new2'] ){//←このelse if節は、
+                    }else if(data['year_Int'] ){//←このelse if節は、
                       //'process_msg'も'failed_msg'もajax通信で返ってこなかったとき。
-                      //なおかつ'df_new2'にてdataframeが返されたときに反応するようにしておいてある
+                      //なおかつ'year_Int'が返されたときに反応するようにしておく
                       //つまり、python側で読み込んだ申請書が１シート以上読み
                       //込めてはじめて、year_month_dialogに遷移するためのもの
                       self.year_vm = data['year_Int'] ;
@@ -931,7 +930,7 @@ Vue.component('mycomp', {
                       self.therapistName_vm= data['therapistName'] ;
                       self.treatmentHosName_vm= data['treatmentHosName'] ;
                       self.registerNo_Str_vm= data['registerNo_Str']; 
-                      self.df_new2_dict= data['df_new2']; 
+                      
                       $('#year_month').modal('show');
                       
                     }else if(data['kentanData'] ){//←このelse if節は、
@@ -971,7 +970,7 @@ Vue.component('mycomp', {
         formData.append('therapistName_fixed', this.therapistName_vm);
         formData.append('treatmentHosName_fixed', this.treatmentHosName_vm);
         formData.append('registerNo_Str_fixed', this.registerNo_Str_vm);
-        formData.append('df_new2', JSON.stringify(this.df_new2_dict));
+      
         //↑バックエンド側（python）から一時的に預かったdataframeを
         //再び戻すために、再度json化してformdataに格納する
         let self=this;
