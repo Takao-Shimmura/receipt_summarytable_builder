@@ -27,6 +27,7 @@ import openpyxl # 外部ライブラリ　pip install openpyxl
 from openpyxl.worksheet.pagebreak import Break
 import pandas as pd
 #import numpy as np
+import tempfile  # ★20260731これを追加
 
 import json
 from datetime import datetime
@@ -116,130 +117,66 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload():
         df_new={}
-        #df_new={}・・・pandasを用いてエクセルを読み込んで作成された
-        #dataframeを、{「シート名」:「dataframe」}  という形の辞書として
-        # 整理したものを入れておく変数
         parsonal_data={}
         
         flg1 = request.form.get('dialogFlg')
+        flg2 = request.form.get('kentanDialogFlg')
 
-        #app.logger.info('flg1={}'.format(flg))
-        # ↓　flg2は県単のダイアログを表示したか否かのフラグ変数
-        flg2= request.form.get('kentanDialogFlg')
-        # ↓　このif節は・・・
-        # 申請の年・月・施術者名・施術所名・登録記号番号を入力する
-        # ダイアログを通過した場合は、dialog_flg＝True ＞＞よってif節以下は実行されない
-        # 通過していない場合（ファイルのアップデートの時）には　dialog_flg = NoneもしくはFalse
-        # ＞＞よってif節以下は実行される
-        if flg1 =='False':
-            
-            #https://blog.imind.jp/entry/2020/01/25/032249
-            #を参照 拡張子チェック機能１↓ (Excelファイルの拡張子であることを確認するための仕込み段階１)
+        # ▼ 1. 一時保存先のパスを作成（OSごとの一時フォルダを自動取得します）
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, f"{session.get('user_access_time', 'error')}.xlsx")
+
+        # セッション切れ対策
+        if session.get('user_access_time') is None:
+             return jsonify({'failed_msg': 'セッションが切れました。トップページからやり直してください。'})
+
+        # ▼ 2. 初回アップロード時（ダイアログを開く前）のみ、ファイルを保存する
+        if flg1 == 'False':
             ALLOWED_EXTENSIONS = ['.xlsx']
-            # ↓ 参照元のサンプルコードでは以下の様に書かれていたが、flask.がエラーとなったため削除
-            #if 'file' not in flask.request.files:
             if 'file' not in request.files:
-                parsonal_data['failed_msg']='読み込めないファイル形式です　アップロード失敗'
+                parsonal_data['failed_msg']='読み込めないファイル形式です アップロード失敗'
                 return jsonify(parsonal_data)
 
-            # fileの取得（FileStorage型で取れる）
-            # https://tedboy.github.io/flask/generated/generated/werkzeug.FileStorage.html
-            
-            # ↓ 参照元のサンプルコードでは以下の様だったが、flask.がエラーとなったため削除
-            #fs = flask.request.files['file']
             fs = request.files['file']
-
-            # 下記のような情報がFileStorageからは取れる⇒デバックコンソールに表示される仕組みにしてある
-            #app.logger.info('file_name={}'.format(fs.filename))
-            #app.logger.info('content_type={} content_length={}, mimetype={}, mimetype_params={}'.format(
-                #fs.content_type, fs.content_length, fs.mimetype, fs.mimetype_params))
-            
-            #拡張子チェック機能２↓(Excelファイルの拡張子であることを確認するための仕込み段階２)
             suffix = pathlib.Path(fs.filename).suffix
-            #拡張子チェック機能３↓↓(Excelファイルの拡張子であることを確認する段階)
             if not suffix in ALLOWED_EXTENSIONS:
                 parsonal_data['failed_msg']="保存できないファイル形式です {}".format(suffix)
                 return jsonify(parsonal_data)
             else:
-                """ # ファイルを保存
-                fs.save(fs.filename) """
-                # ファイルを保存
-                fs.save(session['user_access_time']+".xlsx")
-                # ↓以下はエクセルを読み込んで、データベースに登録する段取り
+                # 一時フォルダに保存する
+                fs.save(temp_file_path)
+                
+        # ▼ 3. ダイアログの前後に関わらず、必ず「一時フォルダ」からファイルを読み込む
+        if os.path.exists(temp_file_path):
+            df_new[session['user_access_time']] = {}
+            # Excelを辞書型DataFrameとして読み込む
+            df_raw = pd.read_excel(temp_file_path, sheet_name=None, header=None, index_col=None)
             
-            path = pathlib.Path("./")    #相対パス指定
-            for pass_obj in path.iterdir():
-                if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
-                    #  ↓Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
-                    #{「シート名」:「dataframe」,「シート名」:「dataframe」}  という形の辞書として取り出される。
-                    # そのままdfという変数に辞書として入れておいてもいいのだが、
-                    #　ユーザーID代わりのsession['user_access_time']をキーとして
-                    #  {session['user_access_time']:{「シート名」:「dataframe」},...}
-                    # という辞書in辞書の形で変数dfに入れ込んでおく。
-                    # そうすることで、多数のユーザーが同時にアクセスしたときに、dfの中身
-                    # が勝手に書き換えられたり、バッティングすることを防ぐため
-                    df={}
-                    df[session['user_access_time']] = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
-                    # ↓ アップロードされたファイルを、情報を読み取った後に削除
-                    # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
-                    # pathlibライブラリを用いたテクニック。
-                    pass_obj.unlink()
+            # インデックスとヘッダーの振り直し
+            for dfsh in df_raw: 
+                dfdic = df_raw[dfsh]
+                dfdic.reset_index(drop=True, inplace=True)
+                shp = dfdic.shape
+                dfdic.index = range(1, shp[0]+1)
+                dfdic.columns = range(1, shp[1]+1)
+                df_new[session['user_access_time']][dfsh] = dfdic
+        else:
+            return jsonify({'failed_msg': '一時ファイルが見つかりません。トップページからやり直してください。'})
 
-                    #　↓　df[session['user_access_time']]内にある、各シートから読み込んだ
-                    # dataframeのインデックスとヘッダーを番号振りなおしして
-                    # 変数df_newに入れ込んでいく。
-                    # この時も、多ユーザー同時接続のバッティングを防ぐために、
-                    # ユーザーID代わりのsession['user_access_time']をキーとして
-                    # 格納しておく
-                    df_new[session['user_access_time']]={}
-                    for dfsh in df[session['user_access_time']]: 
-                        dfdic=df[session['user_access_time']][dfsh]
-                        dfdic.reset_index(drop=True, inplace=True)
-                        shp=dfdic.shape
-                        dfdic.index=range(1,shp[0]+1)
-                        dfdic.columns=range(1,shp[1]+1)
-                        df_new[session['user_access_time']][dfsh]=dfdic
-     
-        #　↓　変数condDictに、検索条件の辞書を込める
+        # 検索条件の辞書を込める
         condDict = get_search_condition()
-        #app.logger.info('condDict={}'.format(condDict))
-        #　↓　変数sC2cAdicに、辞書を込める
-        # ’キー’は'seardhテーブル'の「属性」の文字列：
-        # ’値’は’calculateテーブル’の「属性」の文字列
         sC2cAdic = get_dic_schCond2calAttr()
-        #　↓　 year_month Dialogから送られてきた変数を、読み込む
-        # どういうわけか、ajax通信で送られてきたものは、すべてstring型になってしまうらしい
+        
+        # ダイアログから送られてきた変数を読み込む
         year_f = request.form.get('year_fixed')
         month_f = request.form.get('month_fixed')
         kenshikai_year_f = request.form.get('kenshikai_year_fixed')
         kenshikai_month_f = request.form.get('kenshikai_month_fixed')
-        #pprint.pprint('kenshikai_month_f{}'.format(kenshikai_month_f))    
         therapistName_f = request.form.get('therapistName_fixed')
         treatmentHosName_f = request.form.get('treatmentHosName_fixed')
         registerNo_Str_f = request.form.get('registerNo_Str_fixed')
-        df_new2_f = request.form.get('df_new2')
-        #pprint.pprint('df_new2_f{}'.format(df_new2_f))    
-        # ↑　df_new2_fは、一時的にフロントエンド側（index2）に送っておいた
-        # dataframeの内容が、返却されてきたもの。
-        # 2重にjson化されているので、それぞれjsonファイルを読み込み、
-        # 最後に、session['user_access_time']をキーとした辞書にぶち込み
-        # 変数df_newに格納して、後に使う
-        #　json.loads()「sがついている」はjson.load()と違うことに注意！
-        # 参考⇒https://note.nkmk.me/python-json-load-dump/
-        # 参考⇒https://www.python.ambitious-engineer.com/archives/617
-        # pd.read_json()
-        # 参考⇒https://note.nkmk.me/python-pandas-to-json/
-        if df_new2_f:
-            df_new={}
-            df_new[session['user_access_time']]={}
-            df_new2=json.loads(df_new2_f)
-            for k, v in df_new2.items():
-                df_new[session['user_access_time']][k]=pd.read_json(v)
-        # app.logger.info('df_new after={}'.format(df_new)) 
-        """ wsh_id_4calc = 1 # loadD_objに乗せるデータのidをリセット
-        wsh_id_4err = 1 # ErrD_objに乗せるデータのidをリセット
-        wsh_id_4ken = 1 # 県単に乗せるデータのidをリセット
-        wsh_id_4kenErr = 1 # 県単に乗せるエラーのデータのidをリセット """
+        
+        # ❌ 注意： request.form.get('df_new2') は削除・無効化します（もう使わないため）
         loadD_obj=[]
         ErrD_obj=[]        
         KentanD_obj=[]
@@ -534,21 +471,6 @@ def upload():
                                         parsonal_data['year_Int'] =int(d_dic['year_Str'])
                                         parsonal_data['month_Int'] =int(d_dic['month_Str'])
                                         
-                                        # ↓　year_month Dialogに遷移する前に、df_new[session['user_access_time']]
-                                        # に格納したdataframeが消えてしまわないように、一時的にフロントエンド側
-                                        # （index2）に送って保存しておいてもらう。
-                                        # parsonal_data内に辞書として格納されたdf_new2は、jsonify(parsonal_data)
-                                        # によって、一回json化されるものの、それだけではエラーが出てしまう。
-                                        # なぜなら、dataframe部分は単純にjson化できないから。
-                                        # つまり、dataframe部分を先に一度json化して、それをさらにもう一度全体を
-                                        # jsonify(parsonal_data)で2重にjson化しなければ、フロントエンド側には送れない。 
-                                        
-                                        # pd.to_json()の使い方
-                                        # 参考⇒https://note.nkmk.me/python-pandas-to-json/
-                                        df_new2={}
-                                        for k, v in df_new[session['user_access_time']].items():
-                                            df_new2[k]=v.to_json()
-                                        parsonal_data['df_new2']=df_new2
                                         # year_month Dialogへと遷移する
                                         return jsonify(parsonal_data)
                                 # ↓　いずれの項目にもFalseがなく、year_month Dialogが
@@ -778,13 +700,17 @@ def upload():
         # ↓　時刻の2桁表示（ゼロ埋め）は.zfill()で行う
         # 参考⇒https://note.nkmk.me/python-zero-padding/
         try:
-            dLFileName='総括票 令和'+year_f+'年'+month_f+'月分　'+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
+            dLFileName='総括票 令和'+year_f+'年'+month_f+'月分 '+str(now.month).zfill(2)+'月' +str(now.day).zfill(2) +'日'+ str(now.hour).zfill(2)+'時' + str(now.minute).zfill(2) +'分'+str(now.second).zfill(2) +'秒 作成'+ '.xlsx'
         except:
             dLFileName='すべてのシートが読み込み不可'+ '.xlsx'
         
         wb.save(dLFileName)
         wb.close() 
         parsonal_data['dLFile']=dLFileName
+
+        # ▼ 最後に、役目を終えた一時ファイルをお掃除（削除）する
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
         return  jsonify(parsonal_data)
         # '総括票 令和'+year_f+'年'+month_f+'月分　'+str(date.month).zfill(2)+'月' +str(date.day).zfill(2) +'日'+ str(date.hour).zfill(2)+'時' + str(date.minute).zfill(2) +'分'+str(date.second).zfill(2) +'秒 作成'+ '.xlsx')
@@ -800,7 +726,7 @@ def download():
     download_file_name=fName
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。(Shim Towerはこちら)
+    # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。(shim Towerはコチラ)
     #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
     # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。(Lenovo PCはこちら)
     sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
@@ -821,11 +747,15 @@ def dlf_delete():
 @app.route('/upload_copy_paste', methods=['POST'])
 def upload_copy_paste():
         df_new={}
-        #df_new={}・・・pandasを用いてエクセルを読み込んで作成される
-        #dataframeを、{「シート名」:「dataframe」}  という形の辞書として
-        # 整理したものを入れておく変数
         parsonal_data={}
-            
+        # ▼ セッション切れ対策
+        if session.get('user_access_time') is None:
+             return jsonify({'failed_msg': 'セッションが切れました。トップページからやり直してください。'})
+             
+        # ▼ 一時保存先のパスを作成（_copy をつけて名前が被らないように工夫）
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, f"{session.get('user_access_time')}_copy.xlsx")
+
         #https://blog.imind.jp/entry/2020/01/25/032249
         #を参照 拡張子チェック機能１↓ (Excelファイルの拡張子であることを確認するための仕込み段階１)
         ALLOWED_EXTENSIONS = ['.xlsx']
@@ -854,51 +784,29 @@ def upload_copy_paste():
             parsonal_data['failed_msg']="保存できないファイル形式です {}".format(suffix)
             return jsonify(parsonal_data)
         else:
-            """ # ファイルを保存
-            fs.save(fs.filename) """
-            # ファイルを保存
-            fs.save(session['user_access_time']+".xlsx")
-            # ↓以下はエクセルを読み込んで、データベースに登録する段取り
+            # ▼ 一時フォルダ（/tmp）に保存
+            fs.save(temp_file_path)
         
-        path = pathlib.Path("./")    #相対パス指定
-        for pass_obj in path.iterdir():
-            if pass_obj.match(session['user_access_time']+".xlsx") and pass_obj.name != 'soukatsuTemp.xlsx' and pass_obj.name != 'copy_paste_Temp.xlsx':
-                #  ↓Pandasを用いてpd.read_excelで読み取られたエクセルの情報は、
-                #{「シート名」:「dataframe」,「シート名」:「dataframe」}  という形の辞書として取り出される。
-                # そのままdfという変数に辞書として入れておいてもいいのだが、
-                #　ユーザーID代わりのsession['user_access_time']をキーとして
-                #  {session['user_access_time']:{「シート名」:「dataframe」},...}
-                # という辞書in辞書の形で変数dfに入れ込んでおく。
-                # そうすることで、多数のユーザーが同時にアクセスしたときに、dfの中身
-                # が勝手に書き換えられたり、バッティングすることを防ぐため
-                df={}
-                df[session['user_access_time']] = pd.read_excel(pass_obj,sheet_name = None,header=None,index_col=None)
-                # ↓ アップロードされたファイルを、情報を読み取った後に削除
-                # 参考　https://www.atmarkit.co.jp/ait/articles/1910/29/news019_2.html
-                # pathlibライブラリを用いたテクニック。
-                pass_obj.unlink()
-
-                #　↓　df[session['user_access_time']]内にある、各シートから読み込んだ
-                # dataframeのインデックスとヘッダーを番号振りなおしして
-                # 変数df_newに入れ込んでいく。
-                # この時も、多ユーザー同時接続のバッティングを防ぐために、
-                # ユーザーID代わりのsession['user_access_time']をキーとして
-                # 格納しておく
-
-                # Excelから読み込んだデータ（DataFrame）の「列番号（ヘッダー）」を、0から始まる番号ではなく、
-                # 1から始まる連番に振り直す処理をしています。
-                # ↓ 
-                # dfdic.index=range(1,shp[0]+1)
-                # dfdic.columns=range(1,shp[1]+1)
-                
-                df_new[session['user_access_time']]={}
-                for dfsh in df[session['user_access_time']]: 
-                    dfdic=df[session['user_access_time']][dfsh]
-                    dfdic.reset_index(drop=True, inplace=True)
-                    shp=dfdic.shape
-                    dfdic.index=range(1,shp[0]+1)
-                    dfdic.columns=range(1,shp[1]+1)
-                    df_new[session['user_access_time']][dfsh]=dfdic
+        # ▼ 一時フォルダから読み込み
+        if os.path.exists(temp_file_path):
+            df_new[session['user_access_time']] = {}
+            # Excelを辞書型DataFrameとして読み込む
+            df_raw = pd.read_excel(temp_file_path, sheet_name=None, header=None, index_col=None)
+            
+            # 💡 この関数はダイアログ等で途切れない（1回で処理が終わる）ため、
+            # 読み込み終わったこのタイミングですぐに一時ファイルを削除してOKです
+            os.remove(temp_file_path)
+            
+            # インデックスとヘッダーの振り直し
+            for dfsh in df_raw: 
+                dfdic = df_raw[dfsh]
+                dfdic.reset_index(drop=True, inplace=True)
+                shp = dfdic.shape
+                dfdic.index = range(1, shp[0]+1)
+                dfdic.columns = range(1, shp[1]+1)
+                df_new[session['user_access_time']][dfsh] = dfdic
+        else:
+            return jsonify({'failed_msg': '一時ファイルが見つかりません。トップページからやり直してください。'})
      
         #　↓　変数condDict2に、検索条件の辞書を込める
         condDict2 = get_search_condition2()
@@ -1180,10 +1088,6 @@ def upload_copy_paste():
             if loadD['title_AcupOrMass']=='はりきゅう':
                 template_sheet = wb['ひな型　はりきゅう申請書'] 
                 # 1. シートの基本複製
-                
-                new_sheet = wb.copy_worksheet(template_sheet)
-                new_sheet.sheet_properties.tabColor = None
-                new_sheet.title = loadD['sheetName']
                 # 1-1. シートの複製(Excelが自動で入れる自動改ページ（破線）がズレる原因は、
                 # シート複製時に「行の高さ」「列の幅」のデータが一部脱落し、Excelがページ内に
                 # 収まる行数を再計算してしまうためです。自動改ページの位置を完全に一致させるには、
@@ -1191,23 +1095,24 @@ def upload_copy_paste():
                 # さらに印刷倍率（Scale）やページ設定のプロパティも同期させる必要があります。
                 # 解決コード以下のコードは、シートの複製後に「行高・列幅」と「印刷設定」を
                 # 完全にコピーする関数です。
-                # 1-1～1-4はそのためのコード)
+                # 1-1～1-2はそのためのコード)
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor =None
+                new_sheet.title = loadD['sheetName']
+                template_sheet.page_setup._parent = template_sheet  # ← これを追加！
+                new_sheet.page_setup._parent = new_sheet            # ← これを追加！
 
-                # 1-1 openpyxlのバグ対策（親参照の再設定）
-                template_sheet.page_setup._parent = template_sheet
-                new_sheet.page_setup._parent = new_sheet
-
-                # 1-2--- ページ設定・印刷設定のコピーと最適化 ---
+                new_sheet.row_breaks = [] # 一度クリア
+                for brk in template_sheet.row_breaks:
+                    new_sheet.row_breaks.append(Break(id=brk.id))
+                
+                # 1-2. ページ設定・印刷倍率のコピー（これで template_sheet から安全に読み込めるようになります）
                 new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
                 new_sheet.page_setup.paperSize = template_sheet.page_setup.paperSize
-                
-                # 1-3★自動改ページ対策：スケール（倍率）を一旦クリアし、フィット設定を強制有効化する
-                new_sheet.page_setup.scale = None  # Scaleが設定されているとfitToWidthが無視されます
-                new_sheet.page_setup.fitToWidth = 1  # 横幅を必ず1ページに収める（※縦を収めたいならfitToHeight=1）
-                new_sheet.page_setup.fitToHeight = 0 # 0は「縦方向は制限せず自動で次のページへ流す」設定
-                
-                # 1-4★Excelに「フィット設定を使ってね」と認識させる最重要スイッチ
-                new_sheet.sheet_properties.pageSetUpPr.fitToPage = True
+                new_sheet.page_setup.scale = template_sheet.page_setup.scale
+                new_sheet.page_setup.fitToWidth = template_sheet.page_setup.fitToWidth
+                new_sheet.page_setup.fitToHeight = template_sheet.page_setup.fitToHeight
+                new_sheet.page_setup.fitToPage = template_sheet.page_setup.fitToPage
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
                 for dv in template_sheet.data_validations.dataValidation:
@@ -1225,10 +1130,6 @@ def upload_copy_paste():
             elif loadD['title_AcupOrMass']=='マッサージ':
                 template_sheet = wb['ひな型　あんまマッサージ申請書']
                 # 1. シートの基本複製
-                                
-                new_sheet = wb.copy_worksheet(template_sheet)
-                new_sheet.sheet_properties.tabColor = None
-                new_sheet.title = loadD['sheetName']
                 # 1-1. シートの複製(Excelが自動で入れる自動改ページ（破線）がズレる原因は、
                 # シート複製時に「行の高さ」「列の幅」のデータが一部脱落し、Excelがページ内に
                 # 収まる行数を再計算してしまうためです。自動改ページの位置を完全に一致させるには、
@@ -1236,23 +1137,20 @@ def upload_copy_paste():
                 # さらに印刷倍率（Scale）やページ設定のプロパティも同期させる必要があります。
                 # 解決コード以下のコードは、シートの複製後に「行高・列幅」と「印刷設定」を
                 # 完全にコピーする関数です。
-                # 1-1～1-4はそのためのコード)
+                # 1-1～1-2はそのためのコード)
+                new_sheet = wb.copy_worksheet(template_sheet)
+                new_sheet.sheet_properties.tabColor =None
+                new_sheet.title = loadD['sheetName']
+                template_sheet.page_setup._parent = template_sheet  # ← これを追加！
+                new_sheet.page_setup._parent = new_sheet            # ← これを追加！
                 
-                # 1-1 openpyxlのバグ対策（親参照の再設定）
-                template_sheet.page_setup._parent = template_sheet
-                new_sheet.page_setup._parent = new_sheet
-
-                # 1-2--- ページ設定・印刷設定のコピーと最適化 ---
+                # 1-2. ページ設定・印刷倍率のコピー（これで template_sheet から安全に読み込めるようになります）
                 new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
                 new_sheet.page_setup.paperSize = template_sheet.page_setup.paperSize
-                
-                # 1-3★自動改ページ対策：スケール（倍率）を一旦クリアし、フィット設定を強制有効化する
-                new_sheet.page_setup.scale = None  # Scaleが設定されているとfitToWidthが無視されます
-                new_sheet.page_setup.fitToWidth = 1  # 横幅を必ず1ページに収める（※縦を収めたいならfitToHeight=1）
-                new_sheet.page_setup.fitToHeight = 0 # 0は「縦方向は制限せず自動で次のページへ流す」設定
-                
-                # 1-4★Excelに「フィット設定を使ってね」と認識させる最重要スイッチ
-                new_sheet.sheet_properties.pageSetUpPr.fitToPage = True
+                new_sheet.page_setup.scale = template_sheet.page_setup.scale
+                new_sheet.page_setup.fitToWidth = template_sheet.page_setup.fitToWidth
+                new_sheet.page_setup.fitToHeight = template_sheet.page_setup.fitToHeight
+                new_sheet.page_setup.fitToPage = template_sheet.page_setup.fitToPage
 
 
                 # 2. セルの入力規則のコピー（必要であれば残してください）
