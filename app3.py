@@ -116,6 +116,15 @@ def index():
 # アップロード機能
 @app.route('/upload', methods=['POST'])
 def upload():
+        # 20260731データファイルを2重にJSON化するヘビーなやり方では負荷がかかりやすく
+        # エラーも出やすいのでGeminiに以下のように設計しなおしてもらった
+        新しい設計のイメージ
+        #ユーザーがExcelをアップロードする。
+        #サーバーは、アップロードされたExcelファイルを session['user_access_time'] の名前で サーバー内の /tmp フォルダに一時保存 する。
+        #フロントエンド（ブラウザ）には、「保存したファイル名（ID）」だけを教える（巨大なJSONは送らない）。
+        #フロントエンドから年・月などを送信してくるときは、その「ファイル名（ID）」と一緒に送る。
+        #サーバーは、/tmp フォルダからそのExcelファイルを再び読み込んで、残りの処理（総括票の作成など）を行う。
+        #この方法なら、通信するデータは「ファイル名」や「年月」などのごくわずかな文字だけになるため、413エラーは絶対に起きませんし、処理速度も格段に上がります。
         df_new={}
         parsonal_data={}
         
@@ -1102,9 +1111,7 @@ def upload_copy_paste():
                 template_sheet.page_setup._parent = template_sheet  # ← これを追加！
                 new_sheet.page_setup._parent = new_sheet            # ← これを追加！
 
-                new_sheet.row_breaks = [] # 一度クリア
-                for brk in template_sheet.row_breaks:
-                    new_sheet.row_breaks.append(Break(id=brk.id))
+                new_sheet.row_breaks = copy.copy(template_sheet.row_breaks)
                 
                 # 1-2. ページ設定・印刷倍率のコピー（これで template_sheet から安全に読み込めるようになります）
                 new_sheet.page_setup.orientation = template_sheet.page_setup.orientation
