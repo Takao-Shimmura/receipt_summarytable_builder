@@ -1,1 +1,1 @@
-web: gunicorn app3:app --timeout 0
+gunicorn app3:app --access-logfile - --error-logfile -
