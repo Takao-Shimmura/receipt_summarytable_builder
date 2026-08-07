@@ -413,7 +413,11 @@ Index
             </li>
             <li class="nav-item">
               <a href="#kokuho-shicyouson" class="nav-link h5">国保（市町村）<br>
-                <h6>※先頭に【67】付くと退職者医療</h6></a>
+                <h6>※先頭に【67】付くと退職者医療</h6><br>
+                <h6>※山形県では総括票Ⅰは「山形県 国保団連むけに1枚作成」ではなく「各市町村ごとに1枚ずつ作成」</h6><br>
+                <h6>※神奈川県は独自様式の「請求書」に転記</h6><br>
+                <h6>※東京都は総括票Ⅰが不要</h6>
+              </a>
               <ul id="sidemenu-1" class="nav nav-pills flex-column pl-3">
                 <li class="nav-item"><a href="#kokuho-niigataken" class="nav-link">新潟県</a></li>
                 <li class="nav-item"><a href="#kokuho-yamagataken" class="nav-link">山形県</a></li>
@@ -623,6 +627,29 @@ Index
                 <!-- ↓検索条件　文字列に'富山県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
                 <!-- ↓検索条件　文字列の先頭に'16'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
                 <template v-if="item['soukatsu1Desti'].includes('富山県') && item['insurer_No_Str'].startsWith('16') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+
+            <h5 class="ml-2 mt-5" id="kokuho-niigataken">その他　都道府県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'新潟県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'15'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="!item['soukatsu1Desti'].includes('新潟県') 
+                && !item['soukatsu1Desti'].includes('山形県') 
+                && !item['soukatsu1Desti'].includes('福島県')
+                && !item['soukatsu1Desti'].includes('群馬県')
+                && !item['soukatsu1Desti'].includes('長野県')
+                && !item['soukatsu1Desti'].includes('富山県')
                 && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
                   <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
                   </tr>
