@@ -74,8 +74,8 @@ app.secret_key = b'random string...'
 # ※ただし、割り当てられたURIそのままでは接続エラー
 #　「postgres://・・・」から「postgresql://・・・」に変更しなければ解消されない
 #参考（heroku公式リファレンス）⇒Why is SQLAlchemy 1.4.x not connecting to Heroku Postgres? - Heroku Help
-###engine = create_engine('postgresql://qrnkdpytaiifps:7b728dc1e568e2d1c1ab80c919e17d10c7f41f8d853c8e5989d907c978bf8d8c@ec2-34-250-16-127.eu-west-1.compute.amazonaws.com:5432/d77prcb2vt5pne')
-###engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
+
+#engine = create_engine('postgresql://postgres:VUMAhzXnnOtNQjGHiYIncziatEadFXSv@ballast.proxy.rlwy.net:51127/railway')
 
 # （１）Railway が提供する DATABASE_URL を読み込む
 raw_url = os.environ["DATABASE_URL"]
@@ -84,6 +84,10 @@ DATABASE_URL = raw_url.replace("postgresql://", "postgresql+psycopg://")
 # （３）エンジン作成
 engine = create_engine(DATABASE_URL)
 
+#　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ahaki_receiptデータベースへの接続用URI 
+#engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
+
+# 744~747行目のファイルのダウンロードのメソッドを、「SHIM TOWER」か「LENOVO_PC」か「railway」かで変えておく（Flaskのバージョンの違い）
 
 # access top page.
 @app.route('/',methods=['GET'])
@@ -365,9 +369,12 @@ def upload():
                                                     #　判定はpd.isnull()
                                                     if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
                                                     get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
-                                                        jj = ''
+                                                        jj = '0'
+                                                    # ⇒20260930改訂　保険者番号のセルに値が入っていなかったら、文字列「0」を挿入
+                                                    #    jj = '0'
                                                     #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
-                                                    # の場合もOK
+                                                    # の場合も「0」で埋めてくれる
+                                            
                                                     # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
                                                     # str(int(float(によって、無理やり整数化と文字列化をする。
                                                     else:
@@ -582,64 +589,66 @@ def upload():
             #app.logger.info('desti={}'.format(desti))  
             #app.logger.info('count1={}'.format(counter1))                     
             #app.logger.info('count1int={}'.format((int(counter1 / 7 - 0.1)+1)))
-            # ↓同じ総括表１の行き先（soukatsu1Desti）に、どれだけの保険者の数がはいるか？
+            # ↓yy=int(len(dicDesti_insur[desti]) / 7 - 0.1)+1　同じ総括表１の行き先（soukatsu1Desti）に、どれだけの保険者の数がはいるか？
             # を、変数yyに込める
-            if '△' not in desti:# 総括票Ⅰを作りたくない保険者
-                yy=int(len(dicDesti_insur[desti]) / 7 - 0.1)+1
-                for x in range(yy):     
-                        target_sheet = wb.copy_worksheet(template_sheet)
-                        #app.logger.info('template_sheet={}'.format(template_sheet.sheet_properties.tabColor))
-                        # ↓　複製したシートのタブの色を、色なしにする
-                        target_sheet.sheet_properties.tabColor =None
-                        if x >= 1:
-                            target_sheet.title = '総括票（Ⅰ）('+ desti +'）'+str(x+1)+'枚目'
-                        else: 
-                            target_sheet.title = '総括票（Ⅰ）('+ desti +'）'
-                        # ↓ 複製したシート(総括票（Ⅰ）)に、それぞれの数値を入れる
-                        target_sheet.cell(14, 26).value = registerNo_Str_f #登録記号番号
-                        target_sheet.cell(17, 26).value = therapistName_f #施術管理者
-                        target_sheet.cell(20, 26).value = treatmentHosName_f #施術所名
-                        target_sheet.cell(6, 10).value = year_f #年
-                        target_sheet.cell(6, 21).value = month_f #月
-                        # ↓ 複製したシートが複数にわたり、x枚目がその最後の時は、
-                        # 保険者名が7段目までいかずに、途中(y段目)で終わるような仕掛け
-                        if x == yy-1:
-                            y = len(dicDesti_insur[desti]) - 7*(x)
-                        # ↓ 複製したシートが複数にわたり、x枚目がその途中の時は、
-                        # 7段目までフルに入力する
-                        elif x < (yy-1):
-                            y = 7
-                        #app.logger.info('y={}'.format(y))
-                        #app.logger.info('target_sheet.title={}'.format(target_sheet.title))
-                        
-                        # ↓ 複製したシート（総括表１）に、保険者名＋改行＋（はりきゅうorマッサージ）
-                        # を、上から順にｖ番目まで入れていく
-                        # （数列v+7*xを用いて、コピーがx枚目のときは、1枚目の続きの保険者が入るようにしてある）
-                        
-                        # ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数（myutil3内で定義）
-                        # して、文字列⇒float浮動小数点に変換された数値を、小数点以下を四捨五入して、
-                        # さらにint関数によって整数化している。（20220830修正）
-
-                        v=0
-                        for v in range(y):
-                            listv = dicDesti_insur[desti]
-                            target_sheet.cell(32 + 6 * v, 2).value = listv[v+7*x][0]+'\n'+'('+listv[v+7*x][1]+')'
+            if '△' not in desti:# 「総括票Ⅰを作りたくない保険者」じゃなかった場合
+                
+                    yy=int(len(dicDesti_insur[desti]) / 7 - 0.1)+1
+                    for x in range(yy):     
+                            target_sheet = wb.copy_worksheet(template_sheet)
+                            #app.logger.info('template_sheet={}'.format(template_sheet.sheet_properties.tabColor))
+                            # ↓　複製したシートのタブの色を、色なしにする
+                            target_sheet.sheet_properties.tabColor =None
+                            if x >= 1:
+                                target_sheet.title = '総括票（Ⅰ）('+ desti +'）'+str(x+1)+'枚目'
+                            else: 
+                                target_sheet.title = '総括票（Ⅰ）('+ desti +'）'
+                            # ↓ 複製したシート(総括票（Ⅰ）)に、それぞれの数値を入れる
+                            target_sheet.cell(14, 26).value = registerNo_Str_f #登録記号番号
+                            target_sheet.cell(17, 26).value = therapistName_f #施術管理者
+                            target_sheet.cell(20, 26).value = treatmentHosName_f #施術所名
+                            target_sheet.cell(6, 10).value = year_f #年
+                            target_sheet.cell(6, 21).value = month_f #月
+                            # ↓ 複製したシートが複数にわたり、x枚目がその最後の時は、
+                            # 保険者名が7段目までいかずに、途中(y段目)で終わるような仕掛け
+                            if x == yy-1:
+                                y = len(dicDesti_insur[desti]) - 7*(x)
+                            # ↓ 複製したシートが複数にわたり、x枚目がその途中の時は、
+                            # 7段目までフルに入力する
+                            elif x < (yy-1):
+                                y = 7
+                            #app.logger.info('y={}'.format(y))
+                            #app.logger.info('target_sheet.title={}'.format(target_sheet.title))
                             
-                            for loadD in loadD_obj:
-                                if loadD['kanji_Insurer_Name'] == listv[v+7*x][0] \
-                                    and loadD['title_AcupOrMass'] == listv[v+7*x][1]:
-                                    if loadD['relationship'] == '本人':
-                                        target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
-                                        kensuu_insert(target_sheet_cell1)
-                                        target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
-                                        loadDInt = int(my_round(float(loadD['amount_Str'])))#本人の費用額
-                                        kingaku_insert(loadDInt,target_sheet_cell2)
-                                    else:
-                                        target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
-                                        kensuu_insert(target_sheet_cell1)
-                                        target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
-                                        loadDInt = int(my_round(float(loadD['amount_Str'])))#家族の費用額
-                                        kingaku_insert(loadDInt,target_sheet_cell2)
+                            # ↓ 複製したシート（総括表１）に、保険者名＋改行＋（はりきゅうorマッサージ）
+                            # を、上から順にｖ番目まで入れていく
+                            # （数列v+7*xを用いて、コピーがx枚目のときは、1枚目の続きの保険者が入るようにしてある）
+                            
+                            # ↓ 金額を変数に入力していく際に、my_round()というオリジナル関数（myutil3内で定義）
+                            # して、文字列⇒float浮動小数点に変換された数値を、小数点以下を四捨五入して、
+                            # さらにint関数によって整数化している。（20220830修正）
+
+                            v=0
+                            for v in range(y):
+                                listv = dicDesti_insur[desti]
+                                target_sheet.cell(32 + 6 * v, 2).value = listv[v+7*x][0]+'\n'+'('+listv[v+7*x][1]+')'
+                                
+                                for loadD in loadD_obj:
+                                    if loadD['kanji_Insurer_Name'] == listv[v+7*x][0] \
+                                        and loadD['title_AcupOrMass'] == listv[v+7*x][1]:
+                                        if loadD['relationship'] == '本人':
+                                            target_sheet_cell1=target_sheet.cell(34 + 6 * v, 15)#本人の件数を入れるセル
+                                            kensuu_insert(target_sheet_cell1)
+                                            target_sheet_cell2=target_sheet.cell(34 + 6 * v, 21)#本人の費用額を入れるセル
+                                            loadDInt = int(my_round(float(loadD['amount_Str'])))#本人の費用額
+                                            kingaku_insert(loadDInt,target_sheet_cell2)
+                                        else:
+                                            target_sheet_cell1=target_sheet.cell(34 + 6 * v, 33)#家族の件数を入れるセル
+                                            kensuu_insert(target_sheet_cell1)
+                                            target_sheet_cell2=target_sheet.cell(34 + 6 * v, 39)#家族の費用額を入れるセル
+                                            loadDInt = int(my_round(float(loadD['amount_Str'])))#家族の費用額
+                                            kingaku_insert(loadDInt,target_sheet_cell2)
+
         template_sheet = wb['総括票（Ⅱ）(ひな形　禁削除)']            
         for insurL in sortInsList:
             target_sheet = wb.copy_worksheet(template_sheet)
@@ -737,7 +746,7 @@ def download():
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。(shim Towerはコチラ)
     #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
-    # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。(Lenovo PCはこちら)
+    # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。(Lenovo PCとrailwayはこちら)
     sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
     return sendingFile
 
@@ -963,9 +972,11 @@ def upload_copy_paste():
                                                 #　判定はpd.isnull()
                                                 if pd.isnull(df_value.loc[get_cellno_2list(cD[sC])[0],\
                                                 get_cellno_2list(cD[sC])[1]+n*cD['insurerNo_CellStep']]):
-                                                    jj = ''
+                                                    jj = '0'
+                                                # ⇒20260930改訂　保険者番号のセルに値が入っていなかったら、文字列「0」を挿入
+                                                #    jj = '0'
                                                 #　↑　これによって、法別番号（保険者番号の上2桁）が「なし」
-                                                # の場合もOK
+                                                # の場合も「0」で埋めてくれる
                                                 # ↓保険者番号の1マスに、整数だけでなく、小数を含んだ数字がはいっているかもしれないので、
                                                 # str(int(float(によって、無理やり整数化と文字列化をする。
                                                 else:
@@ -1203,7 +1214,7 @@ if __name__=='__main__':
     # ↓　サーバーにデプロイして公開するためのもの
     ###app.run(host='0.0.0.0')
     # ↓　ローカルで用いるためのもの
-    #app.run(host='localhost')
+    ###app.run(host='localhost')
 
     # 2026年7月14日より　Railwayサーバーにデプロイして公開するためのもの
     # Railwayが指定するポート番号を取得（なければデフォルト5000）

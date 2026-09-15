@@ -34,6 +34,9 @@ engine = create_engine(DATABASE_URL)
 #　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ICM_demoデータベースへの接続用URI 
 #engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ICM_demo')
 
+#　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ahaki_receiptデータベースへの接続用URI 
+#engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
+
 
 
 # base model
@@ -681,23 +684,11 @@ def define_soukatsu1Desti(dic1):
             dic1['soukatsu1Desti'] = 'False'
             dic1['kana_Insurer_Name'] = 'False'
             dic1['kanji_Insurer_Name'] = 'False'
-        #　↓　協会けんぽ　組合保険　の一番最初の桁が0始まりなので、
-        # insurardataに登録されている保険番号と合致しない。そのときは
-        # 先頭の0を消去して、再検索してみる
-        elif dic1['insurer_No_Str'][0:1] =='0':
-            try:
-                myinsdata = ses.query(InsurerData).\
-                filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][1:] ).one()
-                dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
-                dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
-                dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name
-            except:
-                dic1['soukatsu1Desti'] = 'NotFound'
-                dic1['kana_Insurer_Name'] = 'NotFound'
-                dic1['kanji_Insurer_Name'] = 'NotFound'
+
         #　↓　国保の退職者医療　の一番最初の桁が67始まりなので、
         # insurardataに登録されている保険番号と合致しない。そのときは
         # 先頭の67を消去して、再検索してみる
+
         elif dic1['insurer_No_Str'][0:2] =='67':
             try:
                 myinsdata = ses.query(InsurerData).\
@@ -709,6 +700,7 @@ def define_soukatsu1Desti(dic1):
                 #　先頭の67を消去して、再検索してみても市町村の国保と合致しない場合
                 # 山形県のように保険者番号が５桁の場合もあるので、
                 # 下5桁（[3:] ）で検索してみる
+                # ⇒20260930改訂　以下の国保（5桁）の再検索は、残留させておくが、意味はなくなる
                 try:
                     myinsdata = ses.query(InsurerData).\
                     filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][3:] ).one()
@@ -775,15 +767,37 @@ def get_soukatsu1Desti_insur_dic(listInList,soukatsu1Desti):
     for key1 in soukatsu1Desti:
         if '△' not in key1:# 総括票Ⅰを作りたくない保険者
             list0=[]
-            for list2 in listInList:
-                if list2[0] == key1:
-                    list1=[]
-                    list1.append(list2[3])
-                    list1.append(list2[2])
-                    if list1 not in list0:
-                        list0.append(list1)
-                        #print('list0={}'.format(list0)) 
-            dic1[key1]=list0
+            if '⇔' in key1 and '国保団連' in key1:# 「総括票Ⅰ」を「はりきゅう」と「マッサージ」で分けたい国保団連(埼玉県・千葉県)だった場合
+                
+                for list2 in listInList:
+                    list_haki_mass = ''
+                    if list2[0] == key1 and list2[2]=='はりきゅう':
+                        list_haki_mass = 'はりきゅう'
+                        list1=[]
+                        list1.append(list2[3])
+                        list1.append(list2[2])
+                        if list1 not in list0:
+                            list0.append(list1)
+                    elif list2[0] == key1 and list2[2]=='マッサージ':
+                        list_haki_mass = 'マッサージ'
+                        list1=[]
+                        list1.append(list2[3])
+                        list1.append(list2[2])
+                        if list1 not in list0:
+                            list0.append(list1)
+                            #print('list0={}'.format(list0)) 
+                dic1[key1+list_haki_mass]=list0
+            
+            else:
+                for list2 in listInList:
+                    if list2[0] == key1:
+                        list1=[]
+                        list1.append(list2[3])
+                        list1.append(list2[2])
+                        if list1 not in list0:
+                            list0.append(list1)
+                            #print('list0={}'.format(list0)) 
+                dic1[key1]=list0
     return dic1
 
 # データベースのCalculateテーブルから
