@@ -15,7 +15,6 @@
 
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-
 </head>
 <body class="py-5" data-spy="scroll" data-target="#sidemenu-1" data-offset="10">
     <!-- ↑　<body>以下のclassは、「登録済み　保険番号」タブで、
@@ -58,6 +57,35 @@
 
     });
     </script>
+
+    
+    <!-- カスタムCSS（色の反転を設定） -->
+<style>
+  /* 通常時のスタイル（例: 背景白、文字青） */
+  .custom-nav-link {
+    color: #0d6efd;
+    background-color: #fff;
+    border: 1px solid #0d6efd;
+    transition: all 0.3s;
+  }
+  /* 反転時（アクティブ）のスタイル（例: 背景青、文字白） */
+  .custom-nav-link.active {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+  }
+</style>
+
+<!-- JavaScript（クリック時にクラスを切り替え） -->
+<script>
+  document.querySelectorAll('.custom-nav-link').forEach(link => {
+    link.addEventListener('click', function() {
+      // 他のリンクのアティブ状態を解除
+      document.querySelectorAll('.custom-nav-link').forEach(item => item.classList.remove('active'));
+      // クリックされたリンクをアクティブにする
+      this.classList.add('active');
+    });
+  });
+</script>
 
   
 <!-- ↑以上は⇒を参照　https://blog1.mammb.com/entry/2019/12/11/090000 -->

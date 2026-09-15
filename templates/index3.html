@@ -394,41 +394,50 @@ Index
       
       <div class="row">
         <div class="col-3">
-          <ul id="sidemenu-1" class="nav nav-pills flex-column sticky-top">
+          <ul id="sidemenu-0" class="nav nav-pills flex-column sticky-top">
             <li class="nav-item">
-              <a href="#kyoukaikennpo" class="nav-link h5">協会けんぽ<br>
+              <a href="#kyoukaikennpo" class="nav-link h5 custom-nav-link">協会けんぽ<br>
               </a>
             </li>
             <li class="nav-item">
-              <a href="#kumiaihoken" class="nav-link h5">組合保険<br>
+              <a href="#kumiaihoken" class="nav-link h5 custom-nav-link">組合保険<br>
               </a>
             </li>
             <li class="nav-item">
-              <a href="#kyousai" class="nav-link h5">共　済<br>
+              <a href="#kyousai" class="nav-link h5 custom-nav-link">共　済<br>
               </a>
             </li>
             <li class="nav-item">
-              <a href="#kokuhokumiai" class="nav-link h5">国保組合<br>
+              <a href="#kokuhokumiai" class="nav-link h5 custom-nav-link" >国保組合<br>
               </a>
             </li>
             <li class="nav-item">
-              <a href="#kokuho-shicyouson" class="nav-link h5">国保（市町村）<br>
-                <h6>※先頭に【67】付くと退職者医療</h6><br>
-                <h6>※山形県では総括票Ⅰは「山形県 国保団連むけに1枚作成」ではなく「各市町村ごとに1枚ずつ作成」</h6><br>
-                <h6>※神奈川県は独自様式の「請求書」に転記</h6><br>
-                <h6>※東京都は総括票Ⅰが不要</h6>
-              </a>
-              <ul id="sidemenu-1" class="nav nav-pills flex-column pl-3">
-                <li class="nav-item"><a href="#kokuho-niigataken" class="nav-link">新潟県</a></li>
-                <li class="nav-item"><a href="#kokuho-yamagataken" class="nav-link">山形県</a></li>
-                <li class="nav-item"><a href="#kokuho-fukushimaken" class="nav-link">福島県</a></li>
+              <!-- 修正ポイント1: data-target="#sidemenu-1" に変更する（以前の#kokuho-shicyousonから変更） -->
+              <a href="javascript:void(0)" class="nav-link h5 custom-nav-link" data-toggle="collapse" data-target="#sidemenu-1" role="button" aria-expanded="false" aria-controls="sidemenu-1">
+              国保（市町村）<br>
+              <h6>※先頭に【67】付くと退職者医療</h6>
+            </a>
+              
+              <!-- 修正ポイント2: id="sidemenu-1" にし、classに "collapse" を付ける -->
+              <ul id="sidemenu-1" class="nav nav-pills flex-column pl-3 collapse">
+                <li class="nav-item"><a href="#kokuho-niigataken" class="nav-link custom-nav-link">新潟県</a></li>
+                <li class="nav-item">
+                  <a href="#kokuho-yamagataken" class="nav-link custom-nav-link">山形県<br>
+                  </a>
+                </li>
+                <!-- <li class="nav-item"><a href="#kokuho-fukushimaken" class="nav-link">福島県</a></li>
                 <li class="nav-item"><a href="#kokuho-gunmaken" class="nav-link">群馬県</a></li>
                 <li class="nav-item"><a href="#kokuho-naganoken" class="nav-link">長野県</a></li>
-                <li class="nav-item"><a href="#kokuho-toyamaken" class="nav-link">富山県</a></li>
+                <li class="nav-item"><a href="#kokuho-toyamaken" class="nav-link">富山県</a></li> -->
+                <li class="nav-item"><a href="#kokuho-toukyouto" class="nav-link custom-nav-link">東京都</a></li>
+                <li class="nav-item"><a href="#kokuho-chibaken" class="nav-link custom-nav-link">千葉県</a></li>
+                <li class="nav-item"><a href="#kokuho-kanagawaken" class="nav-link custom-nav-link">神奈川県</a></li>
+                <li class="nav-item"><a href="#kokuho-saitamaken" class="nav-link custom-nav-link">埼玉県</a></li>
+                <li class="nav-item"><a href="#kokuho-sonota" class="nav-link custom-nav-link">他の都道府県</a></li>
               </ul>
             </li>
             <li class="nav-item">
-              <a href="#koukikourei" class="nav-link h5">後期高齢者医療広域連合<br>
+              <a href="#koukikourei" class="nav-link h5 custom-nav-link">後期高齢者医療広域連合<br>
               <h6>※上4桁で判定</h6></a>
             </li>
             
@@ -444,9 +453,9 @@ Index
             <template v-for="item in insurerdataList">
               <!-- ↓検索条件　文字列に'全国健康保険協会'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
               <!-- ↓検索条件　文字列の先頭に'1'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('全国健康保険協会') && item['insurer_No_Str'].startsWith('1')">
-                <!-- ↓　協会けんぽ　は　0 始まりなので、保険者番号の先頭に 0 を付け足しておく -->
-                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>0{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+              <template v-if="item['kanji_Insurer_Name'].includes('全国健康保険協会') ">
+                
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
                 </tr>
               </template> 
             </template> 
@@ -462,10 +471,10 @@ Index
             <template v-for="item in insurerdataList">
               <!-- ↓検索条件　文字列に'健康保険組合'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
               <!-- ↓検索条件　文字列の先頭に'6'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('健康保険組合') && item['insurer_No_Str'].startsWith('6') && 
+              <template v-if="item['kanji_Insurer_Name'].includes('健康保険組合') && 
               !item['kanji_Insurer_Name'].includes('国民健康保険組合') ">
-                <!-- ↓　組合保険は　0 始まりなので、保険者番号の先頭に 0 を付け足しておく -->
-                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>0{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                
+                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
                 </tr>
               </template> 
             </template> 
@@ -481,29 +490,12 @@ Index
             <template v-for="item in insurerdataList">
               <!-- ↓検索条件　文字列に'共済'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
               <!-- ↓検索条件　文字列の先頭に'34'から始まる⇒学校共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('34')">
+              <template v-if="item['kanji_Insurer_Name'].includes('共済') ">
                 <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
                 </tr>
               </template> 
 
-              <!-- ↓検索条件　文字列に'共済'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-              <!-- ↓検索条件　文字列の先頭に'31'から始まる⇒国家公務員共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('31')">
-                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                </tr>
-              </template> 
 
-              <!-- ↓検索条件　文字列の先頭に'32'から始まる⇒地方公務員共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('32')">
-                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                </tr>
-              </template> 
-
-              <!-- ↓検索条件　文字列の先頭に'33'から始まる⇒警察共済　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-              <template v-if="item['kanji_Insurer_Name'].includes('共済') && item['insurer_No_Str'].startsWith('33')">
-                <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                </tr>
-              </template> 
 
             </template> 
             </tbody>
@@ -535,10 +527,12 @@ Index
               <tbody>
               <template v-for="item in insurerdataList">
                 <!-- ↓検索条件　文字列に'新潟県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'15'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('新潟県') && item['insurer_No_Str'].startsWith('15') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                <!-- ⇒20260930改訂　↓検索条件　kanji_Insurer_Name　文字列に'国民健康保険組合'を含まない　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ⇒20260930改訂　↓検索条件　文字列の先頭が'0015'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('新潟県') && item['insurer_No_Str'].startsWith('0015') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
                   </tr>
                 </template> 
               </template> 
@@ -553,89 +547,101 @@ Index
               <tbody>
               <template v-for="item in insurerdataList">
                 <!-- ↓検索条件　文字列に'山形県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'6'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('山形県') && item['insurer_No_Str'].startsWith('6') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                  </tr>
-                </template> 
-              </template> 
-              </tbody>
-            </table>
-            
-            <h5 class="ml-2 mt-5" id="kokuho-fukushimaken">福島県</h5>
-            <table class="table table-striped ml-2">
-              <thead class="thead-light">
-                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
-              </thead>
-              <tbody>
-              <template v-for="item in insurerdataList">
-                <!-- ↓検索条件　文字列に'福島県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'7'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('福島県') && item['insurer_No_Str'].startsWith('7') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                  </tr>
-                </template> 
-              </template> 
-              </tbody>
-            </table>
-            
-            <h5 class="ml-2 mt-5" id="kokuho-gunmaken">群馬県</h5>
-            <table class="table table-striped ml-2">
-              <thead class="thead-light">
-                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
-              </thead>
-              <tbody>
-              <template v-for="item in insurerdataList">
-                <!-- ↓検索条件　文字列に'群馬県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'10'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('群馬県') && item['insurer_No_Str'].startsWith('10') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                  </tr>
-                </template> 
-              </template> 
-              </tbody>
-            </table>
-            
-            <h5 class="ml-2 mt-5" id="kokuho-naganoken">長野県</h5>
-            <table class="table table-striped ml-2">
-              <thead class="thead-light">
-                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
-              </thead>
-              <tbody>
-              <template v-for="item in insurerdataList">
-                <!-- ↓検索条件　文字列に'長野県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'20'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('長野県') && item['insurer_No_Str'].startsWith('20') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
-                  </tr>
-                </template> 
-              </template> 
-              </tbody>
-            </table>
-            
-            <h5 class="ml-2 mt-5" id="kokuho-toyamaken">富山県</h5>
-            <table class="table table-striped ml-2">
-              <thead class="thead-light">
-                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
-              </thead>
-              <tbody>
-              <template v-for="item in insurerdataList">
-                <!-- ↓検索条件　文字列に'富山県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
-                <!-- ↓検索条件　文字列の先頭に'16'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
-                <template v-if="item['soukatsu1Desti'].includes('富山県') && item['insurer_No_Str'].startsWith('16') 
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                <!-- ⇒20260930改訂　↓検索条件　kanji_Insurer_Name　文字列に'国民健康保険組合'を含まない　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ⇒20260930改訂　↓検索条件　文字列の先頭に'0006'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('山形県') && item['insurer_No_Str'].startsWith('0006') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
                   </tr>
                 </template> 
               </template> 
               </tbody>
             </table>
 
-            <h5 class="ml-2 mt-5" id="kokuho-niigataken">その他　都道府県</h5>
+
+            <h5 class="ml-2 mt-5" id="kokuho-toukyouto">東京都</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'東京都'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'0013'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('東京都') && item['insurer_No_Str'].startsWith('0013') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table> 
+
+            <h5 class="ml-2 mt-5" id="kokuho-chibaken">千葉県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'千葉県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'0012'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('千葉県') && item['insurer_No_Str'].startsWith('0012') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>
+            
+            <h5 class="ml-2 mt-5" id="kokuho-kanagawaken">神奈川県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'神奈川県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'0014'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('神奈川県') && item['insurer_No_Str'].startsWith('0014') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>   
+
+            <h5 class="ml-2 mt-5" id="kokuho-saitamaken">埼玉県</h5>
+            <table class="table table-striped ml-2">
+              <thead class="thead-light">
+                <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
+              </thead>
+              <tbody>
+              <template v-for="item in insurerdataList">
+                <!-- ↓検索条件　文字列に'埼玉県'を含む　参考⇒https://www.javadrive.jp/javascript/string/index20.html -->
+                <!-- ↓検索条件　文字列の先頭に'0011'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
+                <template v-if="item['soukatsu1Desti'].includes('埼玉県') && item['insurer_No_Str'].startsWith('0011') 
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合')
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
+                  </tr>
+                </template> 
+              </template> 
+              </tbody>
+            </table>             
+            
+            
+       
+
+
+
+            <h5 class="ml-2 mt-5" id="kokuho-sonota">その他　都道府県</h5>
             <table class="table table-striped ml-2">
               <thead class="thead-light">
                 <tr><th style="width: 40%">保険者名</th><th style="width: 20%">保険者番号</th><th style="width: 40%">備考</th></tr>
@@ -646,12 +652,13 @@ Index
                 <!-- ↓検索条件　文字列の先頭に'15'から始まる　参考⇒https://www.javadrive.jp/javascript/string/index21.html -->
                 <template v-if="!item['soukatsu1Desti'].includes('新潟県') 
                 && !item['soukatsu1Desti'].includes('山形県') 
-                && !item['soukatsu1Desti'].includes('福島県')
-                && !item['soukatsu1Desti'].includes('群馬県')
-                && !item['soukatsu1Desti'].includes('長野県')
-                && !item['soukatsu1Desti'].includes('富山県')
-                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') " >
-                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str']}}</td><td>{{item['info']}}</td>
+                && !item['soukatsu1Desti'].includes('千葉県')
+                && !item['soukatsu1Desti'].includes('神奈川県')
+                && !item['soukatsu1Desti'].includes('東京都')
+                && !item['kanji_Insurer_Name'].includes('国民健康保険組合') 
+                && !item['kanji_Insurer_Name'].includes('協会けんぽ') 
+                && item['info_admin'].includes('●市町村国保')  " >
+                  <tr><td>{{item['kanji_Insurer_Name']}}</td><td>{{item['insurer_No_Str'].replace(/^0{2,3}/, '')}}</td><td>{{item['info']}}</td>
                   </tr>
                 </template> 
               </template> 
