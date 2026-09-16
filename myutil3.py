@@ -35,7 +35,7 @@ engine = create_engine(DATABASE_URL)
 #engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ICM_demo')
 
 #　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ahaki_receiptデータベースへの接続用URI 
-#engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
+###engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
 
 
 
@@ -692,7 +692,7 @@ def define_soukatsu1Desti(dic1):
         elif dic1['insurer_No_Str'][0:2] =='67':
             try:
                 myinsdata = ses.query(InsurerData).\
-                filter(InsurerData.insurer_No_Str==dic1['insurer_No_Str'][2:] ).one()
+                filter(InsurerData.insurer_No_Str=='00'+dic1['insurer_No_Str'][2:] ).one()
                 dic1['soukatsu1Desti'] = myinsdata.soukatsu1Desti
                 dic1['kana_Insurer_Name'] = myinsdata.kana_Insurer_Name
                 dic1['kanji_Insurer_Name'] = myinsdata.kanji_Insurer_Name

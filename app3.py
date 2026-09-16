@@ -85,9 +85,11 @@ DATABASE_URL = raw_url.replace("postgresql://", "postgresql+psycopg://")
 engine = create_engine(DATABASE_URL)
 
 #　↓　ローカルPC(SHIM TOWER)内のpostgreSQL14の仮想サーバーにある、ahaki_receiptデータベースへの接続用URI 
-#engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
+###engine = create_engine('postgresql://postgres:shimshim@localhost:5433/ahaki_receipt')
 
-# 744~747行目のファイルのダウンロードのメソッドを、「SHIM TOWER」か「LENOVO_PC」か「railway」かで変えておく（Flaskのバージョンの違い）
+# 744~747行目のファイルのダウンロードのメソッドを、「SHIM TOWER」か「LENOVO_PC」か「railway」かで変えておく
+# （Flaskのバージョンの違い）
+#  最終行のポート番号を　ローカルか？railwayの本番環境か？　で変えておく
 
 # access top page.
 @app.route('/',methods=['GET'])
@@ -745,9 +747,9 @@ def download():
     download_file = fName
     XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     # ↓　Flask ver2.2未満の場合(ローカル環境)は　attachment_filename=　という引数を用いる。(shim Towerはコチラ)
-    #sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
+    sendingFile=send_file(download_file, as_attachment=True,attachment_filename=download_file_name,mimetype=XLSX_MIMETYPE)
     # ↓　Flask ver2.2以降の場合は　download_name=　という引数を用いる。(Lenovo PCとrailwayはこちら)
-    sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
+    #sendingFile=send_file(download_file, as_attachment=True,download_name=download_file_name,mimetype=XLSX_MIMETYPE)
     return sendingFile
 
 @app.route('/dLfileDel', methods=['GET'])
